@@ -19,7 +19,7 @@
                     Thông minh &amp; Toàn diện
                 </h1>
 
-                <p class="lead text-muted-custom mb-4" style="max-width: 540px;">
+                <p class="lead text-muted-custom mb-4 hero-description">
                     RAG Chatbot học tập với khả năng trả lời chính xác dựa trên tài liệu độc quyền, tích hợp công cụ RAGAS Benchmark chuyên sâu cho nghiên cứu và đánh giá mô hình LLM.
                 </p>
 
@@ -57,29 +57,28 @@
                     <div class="hero-visual-glow"></div>
                     <div class="card-glass border border-white border-opacity-10 p-2 hero-card-3d">
                         <img src="https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop"
-                             alt="AI Dashboard" class="img-fluid rounded-3 opacity-90"
-                             style="border: 1px solid rgba(255,255,255,0.06);" />
+                             alt="AI Dashboard" class="img-fluid rounded-3 opacity-90 hero-image" />
 
                         <div class="card-glass hero-float-badge bottom-left hover-scale d-none d-md-block">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="stat-icon stat-icon-cyan" style="width:40px;height:40px;font-size:1rem;">
+                                <div class="stat-icon stat-icon-cyan hero-stat-icon">
                                     <i class="bi bi-lightning-charge-fill"></i>
                                 </div>
                                 <div>
                                     <div class="fw-bold text-white small">Tốc độ phản hồi</div>
-                                    <div class="text-muted-custom" style="font-size:0.78rem;">Siêu tốc ~350ms</div>
+                                    <div class="text-muted-custom hero-stat-text">Siêu tốc ~350ms</div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="card-glass hero-float-badge top-right hover-scale d-none d-md-block">
                             <div class="d-flex align-items-center gap-3">
-                                <div class="stat-icon stat-icon-green" style="width:40px;height:40px;font-size:1rem;">
+                                <div class="stat-icon stat-icon-green hero-stat-icon">
                                     <i class="bi bi-shield-check"></i>
                                 </div>
                                 <div>
                                     <div class="fw-bold text-white small">RAGAS Benchmark</div>
-                                    <div class="text-muted-custom" style="font-size:0.78rem;">Độ chính xác &gt;95%</div>
+                                    <div class="text-muted-custom hero-stat-text">Độ chính xác &gt;95%</div>
                                 </div>
                             </div>
                         </div>
@@ -202,18 +201,71 @@
                         @foreach (var (num, icon, title, desc) in steps)
                         {
                             <div class="col-6">
-                                <div class="d-flex gap-3 align-items-start p-3 rounded-3" style="background:rgba(255,255,255,0.03);border:1px solid var(--border-glass);">
-                                    <div class="stat-icon stat-icon-primary flex-shrink-0" style="width:40px;height:40px;font-size:0.9rem;">
+                                <div class="workflow-step-card">
+                                    <div class="stat-icon stat-icon-primary workflow-step-icon flex-shrink-0">
                                         <i class="bi @icon"></i>
                                     </div>
                                     <div>
                                         <div class="text-glow small fw-bold">Bước @num</div>
                                         <div class="text-white fw-semibold small">@title</div>
-                                        <div class="text-muted-custom" style="font-size:0.78rem;">@desc</div>
+                                        <div class="text-muted-custom workflow-step-desc">@desc</div>
                                     </div>
                                 </div>
                             </div>
                         }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Highlights -->
+    <section class="pb-5">
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card-glass highlight-panel h-100 p-4 border-gradient-left">
+                    <span class="section-label mb-3"><i class="bi bi-award-fill"></i> Lợi ích</span>
+                    <h3 class="fw-bold text-white mb-3">Hệ thống thiết kế cho học tập hiện đại</h3>
+                    <p class="text-muted-custom mb-4">
+                        Kết hợp quản lý tài liệu, chat RAG và benchmark trong một giao diện duy nhất giúp sinh viên và giảng viên vận hành nhanh, trực quan và chuyên nghiệp.
+                    </p>
+                    <ul class="list-unstyled text-muted-custom mb-0 highlight-list">
+                        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Truy vấn trực tiếp trên tài liệu khóa học</li>
+                        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Quản lý chương học & tài liệu tập trung</li>
+                        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> Benchmark khoa học cho mô hình AI</li>
+                        <li><i class="bi bi-check-circle-fill text-primary me-2"></i> An toàn quyền lợi theo vai trò Admin/Teacher/Student</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="row g-4">
+                    <div class="col-sm-6">
+                        <div class="card-glass feature-card-hover p-4 h-100 text-center">
+                            <div class="feature-icon-ring feature-primary mb-3"><i class="bi bi-graph-up-arrow"></i></div>
+                            <h5 class="text-white fw-bold mb-2">Bảng điều khiển thông minh</h5>
+                            <p class="text-muted-custom small mb-0">Xem ngay các chỉ số hoạt động, trạng thái benchmark và hiệu suất hệ thống.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card-glass feature-card-hover p-4 h-100 text-center">
+                            <div class="feature-icon-ring feature-purple mb-3"><i class="bi bi-shield-lock-fill"></i></div>
+                            <h5 class="text-white fw-bold mb-2">Bảo mật vai trò</h5>
+                            <p class="text-muted-custom small mb-0">Phân quyền rõ ràng, chỉ người có quyền mới có thể upload học liệu và sửa đổi môn học.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card-glass feature-card-hover p-4 h-100 text-center">
+                            <div class="feature-icon-ring feature-cyan mb-3"><i class="bi bi-clock-history"></i></div>
+                            <h5 class="text-white fw-bold mb-2">Lịch sử truy vấn</h5>
+                            <p class="text-muted-custom small mb-0">Lưu lại các phiên chat quan trọng để xem lại và tiếp tục nghiên cứu.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card-glass feature-card-hover p-4 h-100 text-center">
+                            <div class="feature-icon-ring feature-green mb-3"><i class="bi bi-file-earmark-text-fill"></i></div>
+                            <h5 class="text-white fw-bold mb-2">Quản lý tài liệu</h5>
+                            <p class="text-muted-custom small mb-0">Tạo chủ đề, thêm chương và upload file mà không cần rời khỏi giao diện.</p>
+                        </div>
                     </div>
                 </div>
             </div>

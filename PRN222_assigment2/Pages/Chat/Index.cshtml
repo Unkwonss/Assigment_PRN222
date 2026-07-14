@@ -28,12 +28,12 @@
         <!-- Document Management Section (Upload + List) -->
         <div id="documentSection" class="d-none mb-2">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="small fw-bold text-muted-custom" style="text-transform:uppercase;letter-spacing:.05em;"><i class="bi bi-files"></i> Tài liệu học tập</span>
-                <button class="btn btn-sm btn-outline-glass py-0 px-2" style="font-size:.72rem;" onclick="openUploadModal()">
+                <span class="small fw-bold text-muted-custom uppercase-text-tracked"><i class="bi bi-files"></i> Tài liệu học tập</span>
+                <button class="btn btn-sm btn-outline-glass py-0 px-2 btn-small-outline" onclick="openUploadModal()">
                     <i class="bi bi-upload"></i> Upload
                 </button>
             </div>
-            <div id="documentList" style="max-height:160px;overflow-y:auto;">
+            <div id="documentList" class="scrollable-sm">
                 <div class="text-center text-muted-custom py-2 small" id="docListPlaceholder">
                     <i class="bi bi-file-earmark-x"></i> Chưa có tài liệu nào
                 </div>
@@ -48,7 +48,7 @@
 
         <!-- Sessions Scrollable Container -->
         <div class="flex-grow-1 overflow-auto pe-1" id="sessionListContainer">
-            <div class="text-muted-custom small fw-semibold mb-1 d-none" id="sessionLabel" style="text-transform:uppercase;letter-spacing:.05em;"><i class="bi bi-clock-history"></i> Lịch sử hội thoại</div>
+            <div class="text-muted-custom small fw-semibold mb-1 d-none uppercase-text-tracked" id="sessionLabel"><i class="bi bi-clock-history"></i> Lịch sử hội thoại</div>
             <div class="text-center text-muted-custom py-5" id="sessionPlaceholder">
                 <i class="bi bi-chat-square-quote fs-2 mb-2 d-block"></i>
                 Vui lòng chọn môn học để xem lịch sử
@@ -65,10 +65,10 @@
             </a>
             
             <div class="collapse mt-2" id="collapseRagSettings">
-                <div class="p-2 rounded bg-dark bg-opacity-25" style="border: 1px solid var(--border-glass);">
+                <div class="p-2 rounded bg-dark bg-opacity-25 panel-border">
                     <div class="mb-2">
                         <label class="small text-muted-custom">Embedding Model</label>
-                        <select id="ragModel" class="form-select form-glass py-1 px-2" style="font-size:0.75rem;" onchange="onSandboxConfigChanged()">
+                        <select id="ragModel" class="form-select form-glass py-1 px-2 text-small-xs" onchange="onSandboxConfigChanged()">
                             @foreach (var m in models)
                             {
                                 <option value="@m.ModelId">@m.ModelName</option>
@@ -77,7 +77,7 @@
                     </div>
                     <div class="mb-2">
                         <label class="small text-muted-custom">Strategy</label>
-                        <select id="ragStrategy" class="form-select form-glass py-1 px-2" style="font-size:0.75rem;" onchange="onSandboxConfigChanged()">
+                        <select id="ragStrategy" class="form-select form-glass py-1 px-2 text-small-xs" onchange="onSandboxConfigChanged()">
                             @foreach (var s in strategies)
                             {
                                 <option value="@s.StrategyId">@s.StrategyName</option>
@@ -87,14 +87,14 @@
                     <div class="row g-2 mb-2">
                         <div class="col-6">
                             <label class="small text-muted-custom">Size</label>
-                            <input type="number" id="ragSize" class="form-control form-glass py-1 px-2" value="500" style="font-size:0.75rem;" onchange="onSandboxConfigChanged()" />
+                            <input type="number" id="ragSize" class="form-control form-glass py-1 px-2 text-small-xs" value="500" onchange="onSandboxConfigChanged()" />
                         </div>
                         <div class="col-6">
                             <label class="small text-muted-custom">Overlap</label>
-                            <input type="number" id="ragOverlap" class="form-control form-glass py-1 px-2" value="100" style="font-size:0.75rem;" onchange="onSandboxConfigChanged()" />
+                            <input type="number" id="ragOverlap" class="form-control form-glass py-1 px-2 text-small-xs" value="100" onchange="onSandboxConfigChanged()" />
                         </div>
                     </div>
-                    <div id="sandboxConfigStatus" class="d-flex align-items-center gap-2 px-2 py-1 rounded" style="font-size:0.68rem; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.2); color:#34d399;">
+                    <div id="sandboxConfigStatus" class="d-flex align-items-center gap-2 px-2 py-1 rounded panel-info-soft text-sm">
                         <i class="bi bi-check-circle-fill"></i>
                         <span id="sandboxStatusText">Cấu hình mặc định — áp dụng cho tin nhắn tiếp theo</span>
                     </div>
@@ -128,7 +128,7 @@
         <!-- Chat Bubble Messages scroll area -->
         <div class="chat-messages" id="chatMessagesArea">
             <div class="w-100 h-100 d-flex align-items-center justify-content-center" id="chatPlaceholderArea">
-                <div class="text-center text-muted-custom" style="max-width: 400px;">
+                <div class="text-center text-muted-custom max-w-400 mx-auto">
                     <i class="bi bi-cpu-fill fs-1 text-glow mb-3 d-block"></i>
                     <h5 class="text-white fw-bold">Trợ lý học tập thông minh RAG</h5>
                     <p class="small">Lựa chọn môn học ở thanh bên trái, bắt đầu cuộc hội thoại để đặt câu hỏi trực tiếp dựa trên nguồn tài liệu đã được giảng viên biên soạn và lập chỉ mục.</p>
@@ -212,9 +212,9 @@
                     <div class="mb-3">
                         <label class="form-label text-muted-custom">Chọn file <span class="text-danger">*</span></label>
                         <input type="file" id="uploadFile" class="form-control form-glass" accept=".pdf,.docx,.pptx,.txt" />
-                        <div class="form-text text-muted-custom" style="font-size:.75rem;">Chấp nhận: PDF, DOCX, PPTX, TXT — Tối đa 15MB</div>
+                        <div class="form-text text-muted-custom text-small-sm">Chấp nhận: PDF, DOCX, PPTX, TXT — Tối đa 15MB</div>
                     </div>
-                    <div id="uploadFormError" class="alert alert-danger d-none py-2" style="font-size:.8rem;"></div>
+                    <div id="uploadFormError" class="alert alert-danger d-none py-2 alert-text-small"></div>
                 </div>
                 <div class="modal-footer modal-footer-glass">
                     <button type="button" class="btn btn-outline-glass" data-bs-dismiss="modal">Hủy</button>
@@ -343,17 +343,17 @@
 
                 if (isErrorResponse) {
                     var errorBotHtml = `
-                        <div class="chat-bubble chat-bubble-bot align-self-start" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);">
+                        <div class="chat-bubble chat-bubble-bot align-self-start chat-error-bubble">
                             <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-exclamation-triangle-fill" style="color:#f87171;"></i>
-                                <span class="fw-semibold" style="color:#fca5a5;">Lỗi phản hồi</span>
+                                <i class="bi bi-exclamation-triangle-fill chat-error-icon"></i>
+                                <span class="fw-semibold chat-error-title">Lỗi phản hồi</span>
                             </div>
-                            <div class="small" style="color:var(--text-secondary);">${escapeHtml(res.botResponse)}</div>
-                            <div class="mt-2 pt-2 border-top border-white border-opacity-10">
-                                <button class="btn btn-sm py-1 px-3" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);color:#818cf8;font-size:.75rem;" onclick="retryLastMessage()">
+                            <div class="small text-muted-custom">${escapeHtml(res.botResponse)}</div>
+                            <div class="mt-2 pt-2 border-top border-white border-opacity-10 chat-meta-row">
+                                <button class="btn btn-sm btn-chat-action text-small-sm" onclick="retryLastMessage()">
                                     <i class="bi bi-arrow-clockwise"></i> Thử lại
                                 </button>
-                                <span class="text-muted-custom ms-2" style="font-size:0.65rem;"><i class="bi bi-clock"></i> ${res.timestamp}</span>
+                                <span class="text-muted-custom ms-2 text-meta-xsm"><i class="bi bi-clock"></i> ${res.timestamp}</span>
                             </div>
                         </div>
                     `;
@@ -362,7 +362,7 @@
                     var botHtml = `
                         <div class="chat-bubble chat-bubble-bot align-self-start border border-white border-opacity-10" onclick="showCitationsForHistory('${res.historyId}')">
                             <div class="bot-text">${formatResponseText(res.botResponse)}</div>
-                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-10" style="font-size:0.7rem;">
+                            <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-10 chat-meta-row">
                                 <div>
                                     <span class="text-muted-custom"><i class="bi bi-clock"></i> ${res.timestamp}</span>
                                     <span class="text-muted-custom ms-3 cursor-pointer copy-btn" onclick="copyBotMessage(event, this)" title="Sao chép tin nhắn"><i class="bi bi-clipboard"></i> Sao chép</span>
@@ -377,12 +377,12 @@
                 scrollToBottom();
             } else {
                 var errorHtml = `
-                    <div class="chat-bubble chat-bubble-bot align-self-start" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);">
+                    <div class="chat-bubble chat-bubble-bot align-self-start chat-error-bubble">
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <i class="bi bi-exclamation-triangle-fill" style="color:#f87171;"></i>
-                            <span class="fw-semibold small" style="color:#fca5a5;">${escapeHtml(res.message)}</span>
+                            <i class="bi bi-exclamation-triangle-fill chat-error-icon"></i>
+                            <span class="fw-semibold small chat-error-title">${escapeHtml(res.message)}</span>
                         </div>
-                        <button class="btn btn-sm py-1 px-3 mt-1" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);color:#818cf8;font-size:.75rem;" onclick="retryLastMessage()">
+                        <button class="btn btn-sm py-1 px-3 mt-1 btn-chat-action text-small-sm" onclick="retryLastMessage()">
                             <i class="bi bi-arrow-clockwise"></i> Thử lại
                         </button>
                     </div>
@@ -398,9 +398,9 @@
                 if ($("#typingIndicator").length === 0) {
                     var typingHtml = `
                         <div class="chat-bubble chat-bubble-bot align-self-start border border-white border-opacity-10 d-flex align-items-center gap-2" id="typingIndicator">
-                            <div class="spinner-grow text-glow spinner-grow-sm" role="status" style="width: 8px; height: 8px;"></div>
-                            <div class="spinner-grow text-glow spinner-grow-sm" role="status" style="width: 8px; height: 8px; animation-delay: 0.2s;"></div>
-                            <div class="spinner-grow text-glow spinner-grow-sm" role="status" style="width: 8px; height: 8px; animation-delay: 0.4s;"></div>
+                            <div class="spinner-grow text-glow spinner-grow-sm spinner-xs" role="status"></div>
+                            <div class="spinner-grow text-glow spinner-grow-sm spinner-xs spinner-delay-200" role="status"></div>
+                            <div class="spinner-grow text-glow spinner-grow-sm spinner-xs spinner-delay-400" role="status"></div>
                             <span class="small text-muted-custom">Trợ lý RAG đang suy nghĩ & so khớp tài liệu...</span>
                         </div>
                     `;
@@ -452,7 +452,7 @@
                     var ft = (d.fileType||'TXT').toUpperCase();
                     var ic = icons[ft] || 'bi-file-earmark';
                     var cls = ft.toLowerCase();
-                    var badge = d.isIndexed ? '<span class="doc-badge ms-auto">Indexed</span>' : '<span class="doc-badge ms-auto" style="background:rgba(251,146,60,.2);color:#fb923c;border-color:rgba(251,146,60,.3);">Pending</span>';
+                    var badge = d.isIndexed ? '<span class="doc-badge ms-auto">Indexed</span>' : '<span class="doc-badge badge-pending ms-auto">Pending</span>';
                     html += `<div class="doc-item ${cls}" title="${d.fileName}"><i class="bi ${ic} doc-icon"></i><span class="text-truncate flex-grow-1">${d.title}</span>${badge}</div>`;
                 });
                 $('#documentList').html(html);
@@ -486,7 +486,7 @@
                 var html = "";
                 data.forEach(function (s) {
                     var isActive = (s.sessionId === activeSessionId) ? "active" : "";
-                    html += `<div class="session-item ${isActive}" data-id="${s.sessionId}" onclick="selectSession('${s.sessionId}', this)"><div class="d-flex align-items-center gap-2 overflow-hidden text-nowrap"><i class="bi bi-chat-left-text text-glow"></i><span class="fw-bold small session-text text-truncate">${s.title}</span></div><span class="small text-muted-custom" style="font-size:0.65rem;">${s.lastUpdatedAt}</span></div>`;
+                    html += `<div class="session-item ${isActive}" data-id="${s.sessionId}" onclick="selectSession('${s.sessionId}', this)"><div class="d-flex align-items-center gap-2 overflow-hidden text-nowrap"><i class="bi bi-chat-left-text text-glow"></i><span class="fw-bold small session-text text-truncate">${s.title}</span></div><span class="small text-muted-custom text-meta-xsm">${s.lastUpdatedAt}</span></div>`;
                 });
                 $("#sessionList").html(html);
             });
@@ -517,7 +517,7 @@
             var el = $('#' + id);
             el.removeClass('step-active step-done step-error');
             var icon = el.find('.step-icon');
-            if (state === 'active') { el.addClass('step-active'); icon.html('<div class="spinner-border spinner-border-sm" style="width:14px;height:14px;border-width:2px;"></div>'); }
+            if (state === 'active') { el.addClass('step-active'); icon.html('<div class="spinner-border spinner-border-sm step-spinner"></div>'); }
             else if (state === 'done')  { el.addClass('step-done');  icon.html('<i class="bi bi-check-circle-fill"></i>'); }
             else if (state === 'error') { el.addClass('step-error'); icon.html('<i class="bi bi-x-circle-fill"></i>'); }
             else                        { icon.html('<i class="bi bi-hourglass"></i>'); }
@@ -564,7 +564,7 @@
                         if (i + 1 < failStep)  setStep(id, 'done');
                         else if (i + 1 === failStep) setStep(id, 'error');
                     });
-                    $('#uploadResultMsg').removeClass('d-none').html('<div class="alert alert-danger py-2" style="font-size:.8rem;"><i class="bi bi-exclamation-triangle-fill"></i> ' + data.message + '</div>');
+                    $('#uploadResultMsg').removeClass('d-none').html('<div class="alert alert-danger py-2 alert-text-small"><i class="bi bi-exclamation-triangle-fill"></i> ' + data.message + '</div>');
                     $('#btnUploadAnother').removeClass('d-none');
                     $('#uploadModalCloseBtn').prop('disabled', false);
                     return;
@@ -579,12 +579,12 @@
                 loadDocumentsForSubject(subId);
                 await sleep(300); setStep('ustep6','done');
 
-                $('#uploadResultMsg').removeClass('d-none').html('<div class="alert py-2" style="background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#34d399;font-size:.8rem;"><i class="bi bi-check-circle-fill"></i> ' + data.message + '</div>');
+                $('#uploadResultMsg').removeClass('d-none').html('<div class="alert alert-soft-success py-2 alert-text-small"><i class="bi bi-check-circle-fill"></i> ' + data.message + '</div>');
                 $('#btnUploadAnother').removeClass('d-none');
                 $('#btnUploadDone').removeClass('d-none');
             } catch(e) {
                 setStep('ustep3','error');
-                $('#uploadResultMsg').removeClass('d-none').html('<div class="alert alert-danger py-2" style="font-size:.8rem;"><i class="bi bi-exclamation-triangle-fill"></i> Lỗi kết nối: ' + e.message + '</div>');
+                $('#uploadResultMsg').removeClass('d-none').html('<div class="alert alert-danger py-2 alert-text-small"><i class="bi bi-exclamation-triangle-fill"></i> Lỗi kết nối: ' + e.message + '</div>');
                 $('#btnUploadAnother').removeClass('d-none');
             }
             $('#uploadModalCloseBtn').prop('disabled', false);
@@ -680,7 +680,7 @@
             var userHtml = `
                 <div class="chat-bubble chat-bubble-user align-self-end">
                     <div>${escapeHtml(message)}</div>
-                    <div class="text-end small text-white text-opacity-50 mt-1" style="font-size:0.65rem;">${timestamp}</div>
+                    <div class="text-end small text-white text-opacity-50 mt-1 text-meta-xsm">${timestamp}</div>
                 </div>
             `;
             $("#chatMessagesArea").append(userHtml);
@@ -745,17 +745,17 @@
 
                     if (isErrorResponse) {
                         var errorBotHtml = `
-                            <div class="chat-bubble chat-bubble-bot align-self-start" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);">
+                            <div class="chat-bubble chat-bubble-bot align-self-start chat-error-bubble">
                                 <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="bi bi-exclamation-triangle-fill" style="color:#f87171;"></i>
-                                    <span class="fw-semibold" style="color:#fca5a5;">Lỗi phản hồi</span>
+                                    <i class="bi bi-exclamation-triangle-fill chat-error-icon"></i>
+                                    <span class="fw-semibold chat-error-title">Lỗi phản hồi</span>
                                 </div>
-                                <div class="small" style="color:var(--text-secondary);">${escapeHtml(res.botResponse)}</div>
-                                <div class="mt-2 pt-2 border-top border-white border-opacity-10">
-                                    <button class="btn btn-sm py-1 px-3" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);color:#818cf8;font-size:.75rem;" onclick="retryLastMessage()">
+                                <div class="small text-muted-custom">${escapeHtml(res.botResponse)}</div>
+                                <div class="mt-2 pt-2 border-top border-white border-opacity-10 chat-meta-row">
+                                    <button class="btn btn-sm btn-chat-action text-small-sm" onclick="retryLastMessage()">
                                         <i class="bi bi-arrow-clockwise"></i> Thử lại
                                     </button>
-                                    <span class="text-muted-custom ms-2" style="font-size:0.65rem;"><i class="bi bi-clock"></i> ${res.timestamp}</span>
+                                    <span class="text-muted-custom ms-2 text-meta-xsm"><i class="bi bi-clock"></i> ${res.timestamp}</span>
                                 </div>
                             </div>
                         `;
@@ -764,7 +764,7 @@
                         var botHtml = `
                             <div class="chat-bubble chat-bubble-bot align-self-start border border-white border-opacity-10" onclick="showCitationsForHistory('${res.historyId}')">
                                 <div class="bot-text">${formatResponseText(res.botResponse)}</div>
-                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-10" style="font-size:0.7rem;">
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-10 chat-meta-row">
                                     <div>
                                         <span class="text-muted-custom"><i class="bi bi-clock"></i> ${res.timestamp}</span>
                                         <span class="text-muted-custom ms-3 cursor-pointer copy-btn" onclick="copyBotMessage(event, this)" title="Sao chép tin nhắn"><i class="bi bi-clipboard"></i> Sao chép</span>
@@ -795,13 +795,13 @@
             }).fail(function(xhr, status, error) {
                 $("#typingIndicator").remove();
                 var errorHtml = `
-                    <div class="chat-bubble chat-bubble-bot align-self-start" style="border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.08);">
+                    <div class="chat-bubble chat-bubble-bot align-self-start chat-error-bubble">
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <i class="bi bi-wifi-off" style="color:#f87171;"></i>
-                            <span class="fw-semibold small" style="color:#fca5a5;">Lỗi kết nối đến máy chủ</span>
+                            <i class="bi bi-wifi-off chat-error-icon"></i>
+                            <span class="fw-semibold small chat-error-title">Lỗi kết nối đến máy chủ</span>
                         </div>
                         <div class="small text-muted-custom">Vui lòng kiểm tra kết nối mạng và thử lại.</div>
-                        <button class="btn btn-sm py-1 px-3 mt-2" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.3);color:#818cf8;font-size:.75rem;" onclick="retryLastMessage()">
+                        <button class="btn btn-sm py-1 px-3 mt-2 btn-chat-action text-small-sm" onclick="retryLastMessage()">
                             <i class="bi bi-arrow-clockwise"></i> Thử lại
                         </button>
                     </div>
@@ -954,7 +954,7 @@
             $("#activeSubjectCode").text("VietRAG Assistant");
             $("#chatMessagesArea").html(`
                 <div class="w-100 h-100 d-flex align-items-center justify-content-center" id="chatPlaceholderArea">
-                    <div class="text-center text-muted-custom" style="max-width: 400px;">
+                    <div class="text-center text-muted-custom max-w-400">
                         <i class="bi bi-cpu-fill fs-1 text-glow mb-3 d-block"></i>
                         <h5 class="text-white fw-bold">Trợ lý học tập thông minh RAG</h5>
                         <p class="small">Lựa chọn môn học ở thanh bên trái, bắt đầu cuộc hội thoại để đặt câu hỏi trực tiếp dựa trên nguồn tài liệu đã được giảng viên biên soạn và lập chỉ mục.</p>
@@ -1011,7 +1011,7 @@
             
             navigator.clipboard.writeText(text).then(function() {
                 var originalHtml = $(elem).html();
-                $(elem).html('<i class="bi bi-check-lg" style="color:#34d399;"></i> <span style="color:#34d399;">Đã chép</span>');
+                $(elem).html('<i class="bi bi-check-lg text-success"></i> <span class="text-success">Đã chép</span>');
                 setTimeout(function() {
                     $(elem).html(originalHtml);
                 }, 2000);

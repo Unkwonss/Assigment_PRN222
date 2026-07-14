@@ -77,21 +77,11 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                            <div class="small text-muted-custom font-monospace" style="font-size:0.75rem;">
-                                LLM: <strong class="text-glow">@(exp.Aimodel?.ModelName ?? "N/A")</strong> (@(exp.Aimodel?.ModelType ?? "N/A"))
-                            </div>
-                            
-                            @if (exp.Aimodel?.ModelType == "Base-RAG")
-                            {
-                                <div class="small text-muted-custom" style="font-size:0.7rem; line-height:1.2;">
-                                    Vector: @(exp.EmbeddingModel?.ModelName ?? "N/A")<br/>
-                                    Strategy: @(exp.Strategy?.StrategyName ?? "N/A") (Size: @(exp.ChunkSize), Overlap: @(exp.ChunkOverlap))
-                                </div>
-                            }
+                            <div class="small text-muted-custom font-monospace text-sm">
                             
                             <div class="d-flex w-100 justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-5">
-                                <span class="small text-muted-custom" style="font-size:0.7rem;">ID: #@exp.ExperimentId</span>
-                                <button class="btn btn-sm btn-glow-primary py-1 px-2 d-flex align-items-center gap-1" onclick="event.stopPropagation(); triggerRunBenchmark(@exp.ExperimentId, '@exp.ExperimentName')" style="font-size:0.75rem;">
+                                <span class="small text-muted-custom text-xxs">ID: #@exp.ExperimentId</span>
+                                <button class="btn btn-sm btn-glow-primary py-1 px-2 d-flex align-items-center gap-1 btn-sm-extra" onclick="event.stopPropagation(); triggerRunBenchmark(@exp.ExperimentId, '@exp.ExperimentName')">
                                     <i class="bi bi-play-fill"></i> Đánh giá
                                 </button>
                             </div>
@@ -105,7 +95,7 @@
         <div class="col-lg-8">
             <!-- Placeholder -->
             <div class="card-glass h-100 p-5 d-flex align-items-center justify-content-center border border-dashed border-white border-opacity-10 rounded-3" id="analyticsPlaceholder">
-                <div class="text-center text-muted-custom" style="max-width: 400px;">
+                <div class="text-center text-muted-custom max-w-400">
                     <i class="bi bi-bar-chart-line fs-1 text-glow mb-3 d-block"></i>
                     <h5 class="text-white fw-bold">Bảng Phân Tích Hiệu Năng & Độ Chính Xác</h5>
                     <p class="small">Lựa chọn cấu hình thử nghiệm ở cột bên trái để hiển thị biểu đồ so sánh chi tiết các chỉ số RAGAS (Faithfulness, Relevance), độ trễ (latency) và chi phí thẻ mã hóa (tokens).</p>
@@ -117,30 +107,30 @@
                 <div class="row g-3 mb-4">
                     <!-- Stat 1 -->
                     <div class="col-md-3 col-6">
-                        <div class="card-glass p-3 text-center" style="background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2) !important;">
+                        <div class="card-glass p-3 text-center stat-card stat-card-blue">
                             <div class="small text-muted-custom mb-1">Faithfulness</div>
                             <h3 class="fw-bold text-glow text-white mb-0" id="avgFaithfulness">0.0</h3>
                         </div>
                     </div>
                     <!-- Stat 2 -->
                     <div class="col-md-3 col-6">
-                        <div class="card-glass p-3 text-center" style="background: rgba(168, 85, 247, 0.05); border-color: rgba(168, 85, 247, 0.2) !important;">
+                        <div class="card-glass p-3 text-center stat-card stat-card-purple">
                             <div class="small text-muted-custom mb-1">Answer Relevance</div>
-                            <h3 class="fw-bold text-white mb-0" style="color: #c084fc !important; text-shadow: 0 0 8px rgba(192, 132, 252, 0.6);" id="avgRelevance">0.0</h3>
+                            <h3 class="fw-bold text-white mb-0 stat-value stat-value-purple" id="avgRelevance">0.0</h3>
                         </div>
                     </div>
                     <!-- Stat 3 -->
                     <div class="col-md-3 col-6">
-                        <div class="card-glass p-3 text-center" style="background: rgba(6, 182, 212, 0.05); border-color: rgba(6, 182, 212, 0.2) !important;">
+                        <div class="card-glass p-3 text-center stat-card stat-card-cyan">
                             <div class="small text-muted-custom mb-1">Avg Latency</div>
-                            <h3 class="fw-bold text-white mb-0" style="color: #22d3ee !important; text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);" id="avgLatency">0ms</h3>
+                            <h3 class="fw-bold text-white mb-0 stat-value stat-value-cyan" id="avgLatency">0ms</h3>
                         </div>
                     </div>
                     <!-- Stat 4 -->
                     <div class="col-md-3 col-6">
-                        <div class="card-glass p-3 text-center" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2) !important;">
+                        <div class="card-glass p-3 text-center stat-card stat-card-green">
                             <div class="small text-muted-custom mb-1">Context Precision</div>
-                            <h3 class="fw-bold text-white mb-0" style="color: #34d399 !important; text-shadow: 0 0 8px rgba(52, 211, 153, 0.6);" id="avgPrecision">0.0</h3>
+                            <h3 class="fw-bold text-white mb-0 stat-value stat-value-green" id="avgPrecision">0.0</h3>
                         </div>
                     </div>
                 </div>
@@ -150,7 +140,7 @@
                     <div class="col-md-6">
                         <div class="card-glass p-3">
                             <h6 class="fw-bold text-white text-glow mb-3"><i class="bi bi-radar"></i> Radar so sánh chỉ số RAGAS</h6>
-                            <div style="height: 250px; position: relative;">
+                            <div class="chart-panel">
                                 <canvas id="radarChart"></canvas>
                             </div>
                         </div>
@@ -158,7 +148,7 @@
                     <div class="col-md-6">
                         <div class="card-glass p-3">
                             <h6 class="fw-bold text-white text-glow mb-3"><i class="bi bi-lightning-charge-fill"></i> Biểu đồ Độ Trễ & Token</h6>
-                            <div style="height: 250px; position: relative;">
+                            <div class="chart-panel">
                                 <canvas id="barChart"></canvas>
                             </div>
                         </div>
@@ -173,8 +163,8 @@
                             <i class="bi bi-download"></i> Xuất CSV
                         </button>
                     </div>
-                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                        <table class="table table-glass mb-0" style="font-size:0.85rem;">
+                    <div class="table-responsive table-scrollable">
+                        <table class="table table-glass mb-0 table-text-small">
                             <thead>
                                 <tr>
                                     <th>Câu hỏi</th>
@@ -272,7 +262,7 @@
 </div>
 
 <!-- Hidden Experiment Delete Form -->
-<form id="deleteExpForm" asp-page-handler="DeleteExperiment" method="post" style="display:none;">
+<form id="deleteExpForm" asp-page-handler="DeleteExperiment" method="post" class="d-none">
     @Html.AntiForgeryToken()
     <input type="hidden" name="experimentId" id="deleteExpId" />
 </form>
@@ -336,7 +326,7 @@
                 </div>
 
                 <!-- Create/Edit Question mini-form panel inside modal (frosted glass) -->
-                <div class="card-glass border-white border-opacity-10 p-3 mb-4 d-none" id="questionFormPanel" style="background: rgba(99,102,241,0.02);">
+                <div class="card-glass border-white border-opacity-10 p-3 mb-4 d-none panel-soft-blue" id="questionFormPanel">
                     <h6 class="fw-bold text-glow text-white mb-2" id="questionFormTitle">Thêm câu hỏi chuẩn mới</h6>
                     <form id="questionForm" onsubmit="saveTestSetQuestion(event)">
                         @Html.AntiForgeryToken()
@@ -357,18 +347,18 @@
                 </div>
 
                 <!-- Scrollable list of test questions -->
-                <div class="table-responsive border border-white border-opacity-10 rounded-3 p-3 overflow-auto bg-dark bg-opacity-25" style="max-height: 320px;" id="testSetTableContainer">
+                <div class="table-responsive border border-white border-opacity-10 rounded-3 p-3 overflow-auto bg-dark bg-opacity-25 table-scrollable" id="testSetTableContainer">
                     <div class="text-center text-muted-custom py-5" id="testSetPlaceholder">
                         <i class="bi bi-patch-question fs-1 mb-2 d-block"></i>
                         Vui lòng chọn môn học để quản lý danh sách câu hỏi
                     </div>
                     
-                    <table class="table table-glass d-none" id="testSetTable" style="font-size:0.8rem;">
+                    <table class="table table-glass d-none" id="testSetTable">
                         <thead>
                             <tr>
                                 <th>Câu hỏi</th>
                                 <th>Đáp án chuẩn</th>
-                                <th class="text-end" style="width:120px;">Thao tác</th>
+                                <th class="text-end w-120">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="testSetTableBody">
@@ -403,7 +393,7 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-glow fw-bold">Câu trả lời mô hình sinh (Model Response):</label>
-                    <div class="p-3 border border-white border-opacity-10 rounded bg-dark bg-opacity-25" id="detailResponse" style="white-space:pre-line;"></div>
+                    <div class="p-3 border border-white border-opacity-10 rounded bg-dark bg-opacity-25 whitespace-pre-line" id="detailResponse"></div>
                 </div>
             </div>
             <div class="modal-footer modal-footer-glass">
@@ -510,12 +500,12 @@
                     // Append row
                     var rowHtml = `
                         <tr>
-                            <td><span class="text-white fw-bold d-block text-truncate" style="max-width:200px;" title="${r.questionText}">${r.questionText}</span></td>
-                            <td><code class="text-glow" style="color: #fbbf24 !important; font-size: 0.9em;">${r.latencyMilliseconds}ms</code></td>
-                            <td><span class="badge text-glow" style="background-color: rgba(99, 102, 241, 0.2) !important; color:#818cf8 !important; border: 1px solid rgba(99, 102, 241, 0.4);">${r.faithfulness}</span></td>
-                            <td><span class="badge text-glow" style="background-color: rgba(168, 85, 247, 0.2) !important; color:#c084fc !important; border: 1px solid rgba(168, 85, 247, 0.4);">${r.relevance}</span></td>
-                            <td><span class="badge text-glow" style="background-color: rgba(6, 182, 212, 0.2) !important; color:#22d3ee !important; border: 1px solid rgba(6, 182, 212, 0.4);">${r.precision}</span></td>
-                            <td><span class="badge text-glow" style="background-color: rgba(16, 185, 129, 0.2) !important; color:#34d399 !important; border: 1px solid rgba(16, 185, 129, 0.4);">${r.recall}</span></td>
+                            <td><span class="text-white fw-bold d-block text-truncate-max" title="${r.questionText}">${r.questionText}</span></td>
+                            <td><code class="text-glow result-code">${r.latencyMilliseconds}ms</code></td>
+                            <td><span class="badge text-glow result-badge-faithfulness">${r.faithfulness}</span></td>
+                            <td><span class="badge text-glow result-badge-relevance">${r.relevance}</span></td>
+                            <td><span class="badge text-glow result-badge-precision">${r.precision}</span></td>
+                            <td><span class="badge text-glow result-badge-recall">${r.recall}</span></td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-glass py-0 px-2" onclick="openDetailsModal('${escapeQuotes(r.questionText)}', '${escapeQuotes(r.groundTruthText)}', '${escapeQuotes(r.generatedResponse)}')">
                                     <i class="bi bi-file-text"></i> Xem

@@ -67,11 +67,11 @@
             <div class="row align-items-center g-3">
                 <div class="col-md-9">
                     <div class="input-group">
-                        <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom" style="border-radius: 8px 0 0 8px;">
+                        <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom input-group-rounded-start">
                             <i class="bi bi-search"></i>
                         </span>
                         <input type="text" name="searchTerm" value="@Model.SearchTerm"
-                               class="form-control form-glass border-start-0" style="border-radius: 0 8px 8px 0;"
+                               class="form-control form-glass border-start-0 input-group-rounded-end"
                                placeholder="Tìm kiếm theo Tên, Email, Username..." id="searchInput"
                                autocomplete="off" />
                     </div>
@@ -91,7 +91,7 @@
             <table class="table table-glass mb-0">
                 <thead>
                     <tr>
-                        <th style="width:80px;">ID</th>
+                        <th class="w-80">ID</th>
                         <th>Họ và tên</th>
                         <th>Username</th>
                         <th>Email</th>
@@ -117,7 +117,7 @@
                                 <td><strong class="text-muted-custom">#@student.UserId</strong></td>
                                 <td>
                                     <div class="d-flex align-items-center gap-2">
-                                        <div class="avatar-glow" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                        <div class="avatar-glow avatar-glow-sm">
                                             @student.FullName[0].ToString().ToUpper()
                                         </div>
                                         <span class="fw-semibold text-white">@student.FullName</span>

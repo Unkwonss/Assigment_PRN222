@@ -66,10 +66,10 @@
             <div class="row align-items-center g-3">
                 <div class="col-md-5">
                     <div class="input-group">
-                        <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom" style="border-radius: 8px 0 0 8px;">
+                        <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom input-group-rounded-start">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-glass border-start-0" style="border-radius: 0 8px 8px 0;"
+                        <input type="text" name="searchTerm" value="@Model.SearchTerm" class="form-control form-glass border-start-0 input-group-rounded-end"
                                placeholder="Tìm kiếm theo Tên, Email, Username..." id="searchInput"
                                autocomplete="off" />
                     </div>
@@ -107,7 +107,7 @@
             <table class="table table-glass mb-0" id="usersTable">
                 <thead>
                     <tr>
-                        <th style="width:60px;">ID</th>
+                        <th class="w-60">ID</th>
                         <th>
                             <a href="@Url.Page("/Account/Users", new { searchTerm = Model.SearchTerm, roleFilter = Model.RoleFilter, sortBy = "fullName", sortOrder = NextOrder("fullName") })"
                                class="text-white text-decoration-none d-inline-flex align-items-center gap-1">
@@ -151,7 +151,7 @@
                             <td><strong class="text-muted-custom">#@user.UserId</strong></td>
                             <td>
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="avatar-glow" style="width: 28px; height: 28px; font-size: 0.8rem;">
+                                    <div class="avatar-glow avatar-glow-sm">
                                         @user.FullName[0].ToString().ToUpper()
                                     </div>
                                     <span class="fw-semibold text-white">@user.FullName</span>
@@ -335,7 +335,7 @@
 </div>
 
 @* Hidden Delete Form *@
-<form id="deleteUserForm" asp-page-handler="DeleteUser" method="post" style="display:none;">
+<form id="deleteUserForm" asp-page-handler="DeleteUser" method="post" class="d-none">
     @Html.AntiForgeryToken()
     <input type="hidden" name="userId" id="deleteUserId" />
 </form>

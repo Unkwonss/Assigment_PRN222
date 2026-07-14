@@ -71,11 +71,11 @@
                                     <div class="small text-muted-custom">@sub.SubjectName</div>
                                     @if (sub.ManagedByUserId != null)
                                     {
-                                        <div class="small text-glow" style="font-size: 0.75rem; color: #818cf8;"><i class="bi bi-person-badge"></i> Trưởng môn: @sub.ManagedByUserName</div>
+                                        <div class="small text-glow text-small-sm text-muted-alt"><i class="bi bi-person-badge"></i> Trưởng môn: @sub.ManagedByUserName</div>
                                     }
                                     else
                                     {
-                                        <div class="small text-warning" style="font-size: 0.75rem;"><i class="bi bi-person-badge-fill"></i> Chưa gán Trưởng môn</div>
+                                        <div class="small text-warning text-small-sm"><i class="bi bi-person-badge-fill"></i> Chưa gán Trưởng môn</div>
                                     }
                                 </div>
                             </div>
@@ -136,9 +136,9 @@
                     </div>
                 </div>
 
-                <div id="reIndexProgress" style="display:none">
+                <div id="reIndexProgress" class="d-none">
                     <div class="progress mt-2">
-                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:100%">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated w-100">
                             Đang re-index, vui lòng chờ...
                         </div>
                     </div>
@@ -199,10 +199,10 @@
                     <div class="mb-3">
                         <label class="form-label text-muted-custom">Giảng viên tham gia giảng dạy (Chọn nhiều)</label>
                         <div class="dropdown">
-                            <button class="btn btn-outline-glass w-100 text-start dropdown-toggle d-flex justify-content-between align-items-center form-glass" type="button" id="createSubTeachersDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="color: #94a3b8;">
+                            <button class="btn btn-outline-glass w-100 text-start dropdown-toggle d-flex justify-content-between align-items-center form-glass" type="button" id="createSubTeachersDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dropdown-color="muted">
                                 <span id="createSubTeachersLabel">-- Chọn giảng viên --</span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-dark p-3 w-100 form-glass" aria-labelledby="createSubTeachersDropdown" style="max-height: 200px; overflow-y: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.1);">
+                            <ul class="dropdown-menu dropdown-menu-dark p-3 w-100 form-glass dropdown-menu-glass" aria-labelledby="createSubTeachersDropdown">
                                 @if (Model.Teachers != null)
                                 {
                                     foreach (var teacher in (IEnumerable<BusinessLayer.DTOs.UserDto>)Model.Teachers)
@@ -266,10 +266,10 @@
                     <div class="mb-3">
                         <label class="form-label text-muted-custom">Giảng viên tham gia giảng dạy (Chọn nhiều)</label>
                         <div class="dropdown">
-                            <button class="btn btn-outline-glass w-100 text-start dropdown-toggle d-flex justify-content-between align-items-center form-glass" type="button" id="editSubTeachersDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="color: #94a3b8;">
+                            <button class="btn btn-outline-glass w-100 text-start dropdown-toggle d-flex justify-content-between align-items-center form-glass" type="button" id="editSubTeachersDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" data-dropdown-color="muted">
                                 <span id="editSubTeachersLabel">-- Chọn giảng viên --</span>
                             </button>
-                            <ul class="dropdown-menu dropdown-menu-dark p-3 w-100 form-glass" aria-labelledby="editSubTeachersDropdown" style="max-height: 200px; overflow-y: auto; background: rgba(15, 23, 42, 0.98); border: 1px solid rgba(255,255,255,0.1);">
+                            <ul class="dropdown-menu dropdown-menu-dark p-3 w-100 form-glass dropdown-menu-glass" aria-labelledby="editSubTeachersDropdown">
                                 @if (Model.Teachers != null)
                                 {
                                     foreach (var teacher in (IEnumerable<BusinessLayer.DTOs.UserDto>)Model.Teachers)
@@ -298,7 +298,7 @@
 </div>
 
 <!-- Hidden Subject Delete Form -->
-<form id="deleteSubForm" asp-page-handler="DeleteSubject" method="post" style="display:none;">
+<form id="deleteSubForm" asp-page-handler="DeleteSubject" method="post" class="d-none">
     @Html.AntiForgeryToken()
     <input type="hidden" name="subjectId" id="deleteSubId" />
 </form>
@@ -384,7 +384,7 @@
                                 <option value="@m.ModelId">@m.ModelName (@m.Provider)</option>
                             }
                         </select>
-                        <div id="modelHelpText" class="mt-2 p-2 rounded small" style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); font-size: 0.75rem; color: #a5b4fc; display: none;"></div>
+                        <div id="modelHelpText" class="mt-2 p-2 rounded small help-text-help text-small-sm text-primary-soft d-none"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted-custom">Chiến lược phân nhỏ (Chunk Strategy)</label>
@@ -394,7 +394,7 @@
                                 <option value="@s.StrategyId">@s.StrategyName</option>
                             }
                         </select>
-                        <div id="strategyHelpText" class="mt-2 p-2 rounded small" style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); font-size: 0.75rem; color: #a7f3d0; display: none;"></div>
+                        <div id="strategyHelpText" class="mt-2 p-2 rounded small help-text-success text-small-sm d-none"></div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-6">
@@ -436,7 +436,7 @@
                 </div>
                 
                 <!-- Scrollable chunks list -->
-                <div class="border border-white border-opacity-10 rounded-3 p-3 overflow-auto bg-dark bg-opacity-25" style="max-height: 400px;" id="chunksListContainer">
+                <div class="border border-white border-opacity-10 rounded-3 p-3 overflow-auto bg-dark bg-opacity-25 card-surface-glass" id="chunksListContainer">
                     <div class="text-center text-muted-custom py-5" id="chunksPlaceholder">
                         <i class="bi bi-box fs-1 mb-2 d-block"></i>
                         Chọn phiên bản chỉ mục để hiển thị nội dung phân mảnh
@@ -736,23 +736,23 @@
                     var docActionBtns = "";
                     if (isManager) {
                         docActionBtns = `
-                            <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1" onclick="openIndexModal(${doc.documentId})" style="font-size:0.75rem;">
+                            <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1 text-small-sm" onclick="openIndexModal(${doc.documentId})">
                                 <i class="bi bi-cpu-fill text-glow"></i> Index
                             </button>
-                            <button class="btn btn-sm btn-logout py-1 px-2 d-flex align-items-center gap-1" onclick="confirmDeleteDoc(${doc.documentId})" style="font-size:0.75rem;">
+                            <button class="btn btn-sm btn-logout py-1 px-2 d-flex align-items-center gap-1 text-small-sm" onclick="confirmDeleteDoc(${doc.documentId})">
                                 <i class="bi bi-trash"></i>
                             </button>
                         `;
                     }
 
                     html += `
-                        <div class="card-glass p-3 mb-2" style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05);">
+                        <div class="card-glass p-3 mb-2 card-surface-glass">
                             <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                                 <div class="d-flex align-items-start gap-2">
                                     <i class="bi bi-file-earmark-code fs-4 text-glow"></i>
                                     <div>
                                         <div class="fw-bold text-white small">${doc.title}</div>
-                                        <div class="small text-muted-custom" style="font-size:0.75rem;">${doc.fileName} (${doc.fileSize})</div>
+                                        <div class="small text-muted-custom text-small-sm">${doc.fileName} (${doc.fileSize})</div>
                                     </div>
                                 </div>
                                 <div class="d-flex flex-column align-items-end gap-1">
@@ -762,13 +762,13 @@
                             </div>
                             
                             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-white border-opacity-10">
-                                <span class="small text-muted-custom" style="font-size:0.7rem;"><i class="bi bi-person-circle"></i> Người tải: ${doc.uploadedBy}</span>
+                                <span class="small text-muted-custom text-meta-xsm"><i class="bi bi-person-circle"></i> Người tải: ${doc.uploadedBy}</span>
                                 <div class="d-inline-flex gap-1">
                                     ${docActionBtns}
-                                    <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1" onclick="openViewChunksModal(${doc.documentId})" style="font-size:0.75rem;">
+                                    <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1 text-small-sm" onclick="openViewChunksModal(${doc.documentId})">
                                         <i class="bi bi-eye-fill"></i> Xem
                                     </button>
-                                    <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1" onclick="downloadExtractedText(${doc.documentId})" style="font-size:0.75rem;" title="Tải văn bản trích xuất">
+                                    <button class="btn btn-sm btn-outline-glass py-1 px-2 d-flex align-items-center gap-1 text-small-sm" onclick="downloadExtractedText(${doc.documentId})" title="Tải văn bản trích xuất">
                                         <i class="bi bi-file-earmark-arrow-down"></i> Tải Text
                                     </button>
                                 </div>
@@ -971,7 +971,7 @@
                                 <span class="badge bg-primary bg-opacity-25 text-glow border border-primary border-opacity-10">Phân mảnh #${c.chunkOrder}</span>
                                 <span class="small text-muted-custom"><i class="bi bi-book"></i> Trang ${c.pageNumber} | <i class="bi bi-ticket-perforation"></i> Tokens ~${c.tokenCount}</span>
                             </div>
-                            <div class="small font-monospace text-muted-custom text-white" style="line-height:1.4; white-space:pre-line;">${c.content}</div>
+                            <div class="small font-monospace text-muted-custom text-white mono-preline">${c.content}</div>
                         </div>
                     `;
                 });

@@ -28,10 +28,11 @@
 
                 @if (TempData["Success"] != null)
                 {
-                    <div class="d-flex align-items-center gap-2 mb-4 p-3"
-                         style="background: rgba(25,135,84,0.18); border: 1px solid rgba(25,135,84,0.45); border-radius: 10px;">
-                        <i class="bi bi-check-circle-fill flex-shrink-0" style="color: #6ee7b7;"></i>
-                        <span style="color: #d1fae5; font-size: 0.9rem;">@TempData["Success"]</span>
+                    <div class="auth-alert auth-alert-success">
+                        <div class="auth-alert-icon">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="small">@TempData["Success"]</div>
                     </div>
                 }
 
@@ -41,14 +42,12 @@
                     <div class="mb-3">
                         <label asp-for="Input.Email" class="form-label text-muted-custom"></label>
                         <div class="input-group">
-                            <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom"
-                                  style="border-radius: 8px 0 0 8px;">
-                                <i class="bi bi-envelope"></i>
-                            </span>
-                            <input asp-for="Input.Email" type="email"
-                                   class="form-control form-glass border-start-0"
-                                   style="border-radius: 0 8px 8px 0; background: rgba(8,10,15,0.5) !important; color: #fff !important;"
-                                   placeholder="email@example.com" />
+                            <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom input-group-text-rounded-left">
+                            <i class="bi bi-envelope"></i>
+                        </span>
+                        <input asp-for="Input.Email" type="email"
+                               class="form-control form-glass border-start-0 form-control-rounded-right"
+                               placeholder="email@example.com" />
                         </div>
                         @if (!string.IsNullOrEmpty(emailServerErr))
                         {
@@ -60,29 +59,28 @@
                     <div class="mb-4">
                         <label asp-for="Input.Password" class="form-label text-muted-custom"></label>
                         <div class="input-group">
-                            <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom"
-                                  style="border-radius: 8px 0 0 8px;">
-                                <i class="bi bi-lock"></i>
-                            </span>
-                            <input asp-for="Input.Password" type="password"
-                                   id="passwordInput"
-                                   class="form-control form-glass border-start-0 border-end-0"
-                                   style="background: rgba(8,10,15,0.5) !important; color: #fff !important;"
-                                   placeholder="Mật khẩu" />
-                            <button type="button" class="input-group-text bg-blur border-start-0 border-white border-opacity-10 text-muted-custom"
-                                    id="togglePassword" style="border-radius: 0 8px 8px 0; cursor:pointer;">
-                                <i class="bi bi-eye" id="eyeIcon"></i>
-                            </button>
+                            <span class="input-group-text bg-blur border-end-0 border-white border-opacity-10 text-muted-custom input-group-text-rounded-left">
+                            <i class="bi bi-lock"></i>
+                        </span>
+                        <input asp-for="Input.Password" type="password"
+                               id="passwordInput"
+                               class="form-control form-glass border-start-0"
+                               placeholder="Mật khẩu" />
+                        <button type="button" class="btn btn-password-toggle"
+                                id="togglePassword">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
                         </div>
                         <span asp-validation-for="Input.Password" class="text-danger small"></span>
                     </div>
 
                     @if (!string.IsNullOrEmpty(authError))
                     {
-                        <div class="d-flex align-items-center gap-2 mb-3 p-3"
-                             style="background: rgba(220,38,38,0.15); border: 1px solid rgba(220,38,38,0.4); border-radius: 10px;">
-                            <i class="bi bi-exclamation-triangle-fill flex-shrink-0" style="color: #fca5a5;"></i>
-                            <span style="color: #fecaca; font-size: 0.88rem;">@authError</span>
+                        <div class="auth-alert auth-alert-error">
+                            <div class="auth-alert-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div class="small">@authError</div>
                         </div>
                     }
 
