@@ -61,6 +61,16 @@
                                     </a>
                                 </li>
                                 <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Admin/ManageTokens") ? "active" : "")" asp-page="/Admin/ManageTokens">
+                                        <i class="bi bi-coin text-glow"></i> Hạn mức Token
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/ManagePackages") ? "active" : "")" asp-page="/Subscription/ManagePackages">
+                                        <i class="bi bi-wallet2"></i> Gói Dịch vụ
+                                    </a>
+                                </li>
+                                <li class="nav-item">
                                     <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Document") ? "active" : "")" asp-page="/Document/Index">
                                         <i class="bi bi-folder-fill"></i> Tài liệu
                                     </a>
@@ -93,12 +103,32 @@
                                         <i class="bi bi-bar-chart-line-fill"></i> Benchmark
                                     </a>
                                 </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription") && !ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/ManagePackages") && !ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/MyHistory") ? "active" : "")" asp-page="/Subscription/Index">
+                                        <i class="bi bi-cart-plus-fill"></i> Mua Token
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/MyHistory") ? "active" : "")" asp-page="/Subscription/MyHistory">
+                                        <i class="bi bi-clock-history"></i> Lịch sử nạp
+                                    </a>
+                                </li>
                             }
                             else
                             {
                                 <li class="nav-item">
                                     <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Chat") ? "active" : "")" asp-page="/Chat/Index">
                                         <i class="bi bi-chat-left-text-fill"></i> Học tập
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription") && !ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/ManagePackages") && !ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/MyHistory") ? "active" : "")" asp-page="/Subscription/Index">
+                                        <i class="bi bi-cart-plus-fill"></i> Mua Token
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link-custom @(ViewContext.HttpContext.Request.Path.StartsWithSegments("/Subscription/MyHistory") ? "active" : "")" asp-page="/Subscription/MyHistory">
+                                        <i class="bi bi-clock-history"></i> Lịch sử nạp
                                     </a>
                                 </li>
                             }

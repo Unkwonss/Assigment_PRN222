@@ -77,11 +77,21 @@
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </div>
-                            <div class="small text-muted-custom font-monospace text-sm">
+                            <div class="small text-muted-custom font-monospace" style="font-size:0.75rem;">
+                                LLM: <strong class="text-glow">@(exp.Aimodel?.ModelName ?? "N/A")</strong> (@(exp.Aimodel?.ModelType ?? "N/A"))
+                            </div>
+                            
+                            @if (exp.Aimodel?.ModelType == "Base-RAG")
+                            {
+                                <div class="small text-muted-custom" style="font-size:0.7rem; line-height:1.2;">
+                                    Vector: @(exp.EmbeddingModel?.ModelName ?? "N/A")<br/>
+                                    Strategy: @(exp.Strategy?.StrategyName ?? "N/A") (Size: @(exp.ChunkSize), Overlap: @(exp.ChunkOverlap))
+                                </div>
+                            }
                             
                             <div class="d-flex w-100 justify-content-between align-items-center mt-2 pt-2 border-top border-white border-opacity-5">
-                                <span class="small text-muted-custom text-xxs">ID: #@exp.ExperimentId</span>
-                                <button class="btn btn-sm btn-glow-primary py-1 px-2 d-flex align-items-center gap-1 btn-sm-extra" onclick="event.stopPropagation(); triggerRunBenchmark(@exp.ExperimentId, '@exp.ExperimentName')">
+                                <span class="small text-muted-custom" style="font-size:0.7rem;">ID: #@exp.ExperimentId</span>
+                                <button class="btn btn-sm btn-glow-primary py-1 px-2 d-flex align-items-center gap-1 btn-sm-extra" onclick="event.stopPropagation(); triggerRunBenchmark(@exp.ExperimentId, '@exp.ExperimentName')" style="font-size:0.75rem;">
                                     <i class="bi bi-play-fill"></i> Đánh giá
                                 </button>
                             </div>
