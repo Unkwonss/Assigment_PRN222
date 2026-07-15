@@ -27,6 +27,10 @@ namespace BusinessLayer.Services
         private readonly IGenericRepository<ChatCitation> _citationRepo;
         private readonly IGenericRepository<ChunkingStrategy> _strategyRepo;
         private readonly IGenericRepository<EmbeddingModel> _modelRepo;
+        private readonly IGenericRepository<ChatSession> _sessionRepo;
+        private readonly IGenericRepository<ChatHistory> _historyRepo;
+        private readonly IGenericRepository<TestSet> _testSetRepo;
+        private readonly IGenericRepository<BenchmarkResult> _benchmarkResultRepo;
         private readonly SimulatedAIEngine _aiEngine;
         private readonly IGeminiEmbeddingService _embeddingService; // kept for non-factory fallback
         private readonly EmbeddingProviderFactory _embeddingFactory;
@@ -43,6 +47,10 @@ namespace BusinessLayer.Services
             IGenericRepository<ChatCitation> citationRepo,
             IGenericRepository<ChunkingStrategy> strategyRepo,
             IGenericRepository<EmbeddingModel> modelRepo,
+            IGenericRepository<ChatSession> sessionRepo,
+            IGenericRepository<ChatHistory> historyRepo,
+            IGenericRepository<TestSet> testSetRepo,
+            IGenericRepository<BenchmarkResult> benchmarkResultRepo,
             SimulatedAIEngine aiEngine,
             IGeminiEmbeddingService embeddingService,
             EmbeddingProviderFactory embeddingFactory,
@@ -58,6 +66,10 @@ namespace BusinessLayer.Services
             _citationRepo     = citationRepo;
             _strategyRepo     = strategyRepo;
             _modelRepo        = modelRepo;
+            _sessionRepo      = sessionRepo;
+            _historyRepo      = historyRepo;
+            _testSetRepo      = testSetRepo;
+            _benchmarkResultRepo = benchmarkResultRepo;
             _aiEngine         = aiEngine;
             _embeddingService = embeddingService;
             _embeddingFactory = embeddingFactory;
@@ -77,6 +89,10 @@ namespace BusinessLayer.Services
                 SubjectId = subject.SubjectId,
                 SubjectCode = subject.SubjectCode,
                 SubjectName = subject.SubjectName,
+                DefaultModelId = subject.DefaultModelId,
+                DefaultStrategyId = subject.DefaultStrategyId,
+                DefaultChunkSize = subject.DefaultChunkSize,
+                DefaultChunkOverlap = subject.DefaultChunkOverlap,
                 ManagedByUserId = headTeacher?.UserId,
                 ManagedByUserName = headTeacher?.User?.FullName,
                 AssignedTeacherIds = subject.SubjectTeachers?.Select(st => st.UserId).ToList() ?? new List<int>(),
@@ -104,7 +120,11 @@ namespace BusinessLayer.Services
             {
                 SubjectId = dto.SubjectId,
                 SubjectCode = dto.SubjectCode,
-                SubjectName = dto.SubjectName
+                SubjectName = dto.SubjectName,
+                DefaultModelId = dto.DefaultModelId,
+                DefaultStrategyId = dto.DefaultStrategyId,
+                DefaultChunkSize = dto.DefaultChunkSize,
+                DefaultChunkOverlap = dto.DefaultChunkOverlap
             };
         }
 
@@ -154,6 +174,7 @@ namespace BusinessLayer.Services
                 Status = doc.Status,
                 UploadedBy = doc.UploadedBy,
                 CreatedAt = doc.CreatedAt,
+                FileHash = doc.FileHash,
                 Chapter = doc.Chapter != null ? new ChapterDto
                 {
                     ChapterId = doc.Chapter.ChapterId,
@@ -193,7 +214,8 @@ namespace BusinessLayer.Services
                 TotalPages = dto.TotalPages,
                 Status = dto.Status,
                 UploadedBy = dto.UploadedBy,
-                CreatedAt = dto.CreatedAt
+                CreatedAt = dto.CreatedAt,
+                FileHash = dto.FileHash
             };
         }
 
@@ -311,7 +333,7 @@ namespace BusinessLayer.Services
         #region Subjects
         public async Task<IEnumerable<SubjectDto>> GetAllSubjectsAsync()
         {
-            var subjects = await _subjectRepo.GetAllAsync(
+            var subjects = await _subjectRepo.GetAllNoTrackingAsync(
                 orderBy: q => q.OrderBy(s => s.SubjectCode),
                 includeProperties: "SubjectTeachers.User"
             );
@@ -342,6 +364,10 @@ namespace BusinessLayer.Services
             {
                 existing.SubjectCode = subjectDto.SubjectCode;
                 existing.SubjectName = subjectDto.SubjectName;
+                existing.DefaultModelId = subjectDto.DefaultModelId;
+                existing.DefaultStrategyId = subjectDto.DefaultStrategyId;
+                existing.DefaultChunkSize = subjectDto.DefaultChunkSize;
+                existing.DefaultChunkOverlap = subjectDto.DefaultChunkOverlap;
                 _subjectRepo.Update(existing);
                 await _subjectRepo.SaveAsync();
             }
@@ -349,6 +375,54 @@ namespace BusinessLayer.Services
 
         public async Task DeleteSubjectAsync(int id)
         {
+            var chapters = await _chapterRepo.GetAllAsync(c => c.SubjectId == id);
+            if (chapters.Any())
+            {
+                throw new InvalidOperationException("Môn học này đang chứa các chương học. Vui lòng xóa hết các chương học trước khi xóa môn học.");
+            }
+
+            // 1. Delete ChatSessions (and their histories + citations) for this subject
+            var sessions = await _sessionRepo.GetAllAsync(s => s.SubjectId == id);
+            foreach (var s in sessions)
+            {
+                var histories = await _historyRepo.GetAllAsync(h => h.SessionId == s.SessionId);
+                foreach (var h in histories)
+                {
+                    var citations = await _citationRepo.GetAllAsync(cit => cit.HistoryId == h.HistoryId);
+                    foreach (var cit in citations)
+                    {
+                        _citationRepo.Delete(cit);
+                    }
+                    await _citationRepo.SaveAsync();
+                    _historyRepo.Delete(h);
+                }
+                await _historyRepo.SaveAsync();
+                _sessionRepo.Delete(s);
+            }
+            await _sessionRepo.SaveAsync();
+
+            // 2. Delete TestSets & BenchmarkResults for this subject
+            var testSets = await _testSetRepo.GetAllAsync(ts => ts.SubjectId == id);
+            foreach (var ts in testSets)
+            {
+                var results = await _benchmarkResultRepo.GetAllAsync(r => r.QuestionId == ts.QuestionId);
+                foreach (var r in results)
+                {
+                    _benchmarkResultRepo.Delete(r);
+                }
+                await _benchmarkResultRepo.SaveAsync();
+                _testSetRepo.Delete(ts);
+            }
+            await _testSetRepo.SaveAsync();
+
+            // 3. Delete teacher assignments
+            var assignments = await _subjectTeacherRepo.GetAllAsync(st => st.SubjectId == id);
+            foreach (var assignment in assignments)
+            {
+                _subjectTeacherRepo.Delete(assignment);
+            }
+            await _subjectTeacherRepo.SaveAsync();
+
             await _subjectRepo.DeleteByIdAsync(id);
             await _subjectRepo.SaveAsync();
         }
@@ -458,16 +532,67 @@ namespace BusinessLayer.Services
 
         public async Task DeleteChapterAsync(int id)
         {
+            var docs = await _documentRepo.GetAllAsync(d => d.ChapterId == id);
+            if (docs.Any(d => d.Status != "Deleted"))
+            {
+                throw new InvalidOperationException("Chương này đang chứa tài liệu. Vui lòng xóa hết tài liệu trong chương trước khi xóa chương.");
+            }
+
+            // Clean up soft-deleted documents to prevent foreign key violations on Chapter delete
+            foreach (var doc in docs)
+            {
+                // Delete physical files
+                string uploadsDir = GetUploadsDirectory();
+                string textFilePath = Path.Combine(uploadsDir, $"{doc.DocumentId}_content.txt");
+                if (File.Exists(textFilePath))
+                {
+                    try { File.Delete(textFilePath); } catch {}
+                }
+                if (File.Exists(doc.FilePath))
+                {
+                    try { File.Delete(doc.FilePath); } catch {}
+                }
+
+                // Delete child entities
+                var indexes = await _indexRepo.GetAllAsync(idx => idx.DocumentId == doc.DocumentId);
+                foreach (var idx in indexes)
+                {
+                    var chunks = await _chunkRepo.GetAllAsync(c => c.IndexId == idx.IndexId);
+                    foreach (var c in chunks)
+                    {
+                        var citations = await _citationRepo.GetAllAsync(cit => cit.ChunkId == c.ChunkId);
+                        foreach (var cit in citations)
+                        {
+                            _citationRepo.Delete(cit);
+                        }
+                        await _citationRepo.SaveAsync();
+                        _chunkRepo.Delete(c);
+                    }
+                    await _chunkRepo.SaveAsync();
+                    _indexRepo.Delete(idx);
+                }
+                await _indexRepo.SaveAsync();
+
+                _documentRepo.Delete(doc);
+            }
+            await _documentRepo.SaveAsync();
+
             await _chapterRepo.DeleteByIdAsync(id);
             await _chapterRepo.SaveAsync();
         }
         #endregion
 
         #region Documents
+        public async Task<bool> IsDuplicateFileHashAsync(int subjectId, string fileHash)
+        {
+            var docs = await _documentRepo.GetAllAsync(d => d.FileHash == fileHash && d.Chapter.SubjectId == subjectId && d.Status != "Deleted", includeProperties: "Chapter");
+            return docs.Any();
+        }
+
         public async Task<IEnumerable<DocumentDto>> GetDocumentsByChapterIdAsync(int chapterId)
         {
-            var docs = await _documentRepo.GetAllAsync(
-                filter: d => d.ChapterId == chapterId,
+            var docs = await _documentRepo.GetAllNoTrackingAsync(
+                filter: d => d.ChapterId == chapterId && d.Status != "Deleted",
                 includeProperties: "UploadedByNavigation"
             );
             return docs.Select(d => MapDocumentToDto(d)!).ToList();
@@ -475,7 +600,7 @@ namespace BusinessLayer.Services
 
         public async Task<IEnumerable<DocumentDto>> GetIndexedDocumentsAsync(int subjectId)
         {
-            var docs = await _documentRepo.GetAllAsync(
+            var docs = await _documentRepo.GetAllNoTrackingAsync(
                 filter: d => d.Chapter.SubjectId == subjectId && d.Status == "Indexed",
                 includeProperties: "Chapter"
             );
@@ -484,7 +609,7 @@ namespace BusinessLayer.Services
 
         public async Task<string> GetEmbeddingStatusAsync(int documentId)
         {
-            var chunks = (await _chunkRepo.GetAllAsync(
+            var chunks = (await _chunkRepo.GetAllNoTrackingAsync(
                 filter: c => c.Index.DocumentId == documentId,
                 includeProperties: "Index"))
                 .ToList();
@@ -503,6 +628,16 @@ namespace BusinessLayer.Services
             return MapDocumentToDto(doc);
         }
 
+        private string GetUploadsDirectory()
+        {
+            string currentDir = Directory.GetCurrentDirectory();
+            if (Directory.Exists(Path.Combine(currentDir, "wwwroot")))
+            {
+                return Path.Combine(currentDir, "wwwroot", "uploads", "documents");
+            }
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+        }
+
         public async Task<DocumentDto> UploadDocumentAsync(DocumentDto documentDto, string textContent)
         {
             var document = MapDocumentToEntity(documentDto)!;
@@ -511,8 +646,7 @@ namespace BusinessLayer.Services
             await _documentRepo.SaveAsync();
 
             // Save the extracted text content to a local storage file
-            // Let's create an uploads directory inside the workspace PresentationLayer/wwwroot/uploads
-            string uploadsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+            string uploadsDir = GetUploadsDirectory();
             if (!Directory.Exists(uploadsDir))
             {
                 Directory.CreateDirectory(uploadsDir);
@@ -530,11 +664,21 @@ namespace BusinessLayer.Services
             if (doc != null)
             {
                 // Delete physical file if exists
-                string uploadsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+                string uploadsDir = GetUploadsDirectory();
                 string textFilePath = Path.Combine(uploadsDir, $"{doc.DocumentId}_content.txt");
                 if (File.Exists(textFilePath))
                 {
                     try { File.Delete(textFilePath); } catch {}
+                }
+                else
+                {
+                    // Fallback delete
+                    string fallbackDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+                    string fallbackPath = Path.Combine(fallbackDir, $"{doc.DocumentId}_content.txt");
+                    if (File.Exists(fallbackPath))
+                    {
+                        try { File.Delete(fallbackPath); } catch {}
+                    }
                 }
 
                 if (File.Exists(doc.FilePath))
@@ -542,7 +686,9 @@ namespace BusinessLayer.Services
                     try { File.Delete(doc.FilePath); } catch {}
                 }
 
-                _documentRepo.Delete(doc);
+                // Soft delete by updating status
+                doc.Status = "Deleted";
+                _documentRepo.Update(doc);
                 await _documentRepo.SaveAsync();
             }
         }
@@ -586,7 +732,7 @@ namespace BusinessLayer.Services
             try
             {
                 // Read text content
-                string uploadsDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+                string uploadsDir = GetUploadsDirectory();
                 string textFilePath = Path.Combine(uploadsDir, $"{documentId}_content.txt");
                 string contentText = "";
                 if (File.Exists(textFilePath))
@@ -595,7 +741,17 @@ namespace BusinessLayer.Services
                 }
                 else
                 {
-                    throw new FileNotFoundException("Không tìm thấy tệp nội dung trích xuất.");
+                    // Fallback to bin folder
+                    string fallbackDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "wwwroot", "uploads", "documents");
+                    string fallbackPath = Path.Combine(fallbackDir, $"{documentId}_content.txt");
+                    if (File.Exists(fallbackPath))
+                    {
+                        contentText = await File.ReadAllTextAsync(fallbackPath, Encoding.UTF8);
+                    }
+                    else
+                    {
+                        throw new FileNotFoundException("Không tìm thấy tệp nội dung trích xuất (Tệp có thể đã bị xóa khi rebuild dự án). Vui lòng xóa tài liệu này và tải lên lại.");
+                    }
                 }
                 _logger.LogInformation("Read extracted text for DocumentId={DocumentId}. Length={Length}", documentId, contentText.Length);
 
@@ -663,39 +819,74 @@ namespace BusinessLayer.Services
                     _logger.LogWarning("Zero chunks generated for DocumentId={DocumentId}. Created fallback warning chunk.", documentId);
                 }
 
-                // Insert DocumentChunks
-                int order = 1;
-                foreach (var chunkText in chunks)
+                // ── OPTIMIZED: Parallel embedding + batch DB insert ──
+                var validChunks = chunks.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+                int totalChunks = validChunks.Count;
+                _logger.LogInformation("Starting parallel embedding for {Count} chunks, DocumentId={DocumentId}", totalChunks, documentId);
+
+                // Parallel embedding with controlled concurrency (max 3 concurrent API calls)
+                var semaphore = new System.Threading.SemaphoreSlim(3);
+                var embeddingTasks = new Task<(int Order, string Text, float[] Embedding)>[totalChunks];
+
+                for (int i = 0; i < totalChunks; i++)
                 {
-                    if (string.IsNullOrWhiteSpace(chunkText)) continue;
-
-                    var embedding = await GenerateEmbeddingWithFallbackAsync(embeddingModel, chunkText, documentId, order);
-
-                    // Keep vector key deterministic and short enough for DB constraints.
-                    string vectorKey = $"vec_{indexRecord.IndexId}_{order}";
-                    
-                    var chunk = new DocumentChunk
+                    int chunkOrder = i + 1;
+                    string chunkText = validChunks[i];
+                    embeddingTasks[i] = Task.Run(async () =>
                     {
-                        IndexId = indexRecord.IndexId,
-                        ChunkOrder = order,
-                        Content = chunkText,
-                        PageNumber = (order / 3) + 1, // Simulated page number mapping
-                        TokenCount = chunkText.Length / 4, // Rough approximation
-                        VectorStoreKey = vectorKey,
-                        EmbeddingVector = embedding.Length > 0 ? SerializeVector(embedding) : null,
-                        HasEmbedding = embedding.Length > 0
-                    };
-
-                    await _chunkRepo.AddAsync(chunk);
-                    order++;
+                        await semaphore.WaitAsync();
+                        try
+                        {
+                            var emb = await GenerateEmbeddingWithFallbackAsync(embeddingModel, chunkText, documentId, chunkOrder);
+                            return (chunkOrder, chunkText, emb);
+                        }
+                        finally
+                        {
+                            semaphore.Release();
+                        }
+                    });
                 }
 
-                await _chunkRepo.SaveAsync();
-                _logger.LogInformation("Saved {ChunkCount} chunks for IndexId={IndexId}", order - 1, indexRecord.IndexId);
+                var embeddingResults = await Task.WhenAll(embeddingTasks);
+
+                // Batch create all DocumentChunk entities
+                var chunkEntities = new List<DocumentChunk>(totalChunks);
+                foreach (var result in embeddingResults.OrderBy(r => r.Order))
+                {
+                    string vectorKey = $"vec_{indexRecord.IndexId}_{result.Order}";
+                    // Fast word count: count spaces instead of Split (avoids allocating string arrays)
+                    int wordCount = 1;
+                    for (int ci = 0; ci < result.Text.Length; ci++)
+                    {
+                        char ch = result.Text[ci];
+                        if (ch == ' ' || ch == '\n' || ch == '\r' || ch == '\t') wordCount++;
+                    }
+                    chunkEntities.Add(new DocumentChunk
+                    {
+                        IndexId = indexRecord.IndexId,
+                        ChunkOrder = result.Order,
+                        Content = result.Text,
+                        PageNumber = (result.Order / 3) + 1,
+                        TokenCount = (int)(wordCount * 1.3),
+                        VectorStoreKey = vectorKey,
+                        EmbeddingVector = result.Embedding.Length > 0 ? SerializeVector(result.Embedding) : null,
+                        HasEmbedding = result.Embedding.Length > 0
+                    });
+                }
+
+                // Save chunks to DB in batches of 20 to prevent SQL CommandTimeout
+                const int dbBatchSize = 20;
+                for (int i = 0; i < chunkEntities.Count; i += dbBatchSize)
+                {
+                    var batch = chunkEntities.Skip(i).Take(dbBatchSize).ToList();
+                    await _chunkRepo.AddRangeAsync(batch);
+                    await _chunkRepo.SaveAsync();
+                    _logger.LogInformation("Batch saved {Count}/{Total} chunks for IndexId={IndexId}", Math.Min(i + dbBatchSize, chunkEntities.Count), chunkEntities.Count, indexRecord.IndexId);
+                }
 
                 // Update document status
                 doc.Status = "Indexed";
-                doc.TotalPages = (order / 3) + 1;
+                doc.TotalPages = (totalChunks / 3) + 1;
                 _documentRepo.Update(doc);
                 await _documentRepo.SaveAsync();
                 _logger.LogInformation("Indexing completed successfully for DocumentId={DocumentId}", documentId);
@@ -714,7 +905,7 @@ namespace BusinessLayer.Services
 
         public async Task<IEnumerable<DocumentIndexDto>> GetIndexesByDocumentIdAsync(int documentId)
         {
-            var indexes = await _indexRepo.GetAllAsync(
+            var indexes = await _indexRepo.GetAllNoTrackingAsync(
                 filter: idx => idx.DocumentId == documentId,
                 includeProperties: "Model,Strategy"
             );
@@ -723,7 +914,7 @@ namespace BusinessLayer.Services
 
         public async Task<IEnumerable<DocumentChunkDto>> GetChunksByIndexIdAsync(int indexId)
         {
-            var chunks = await _chunkRepo.GetAllAsync(
+            var chunks = await _chunkRepo.GetAllNoTrackingAsync(
                 filter: c => c.IndexId == indexId,
                 orderBy: q => q.OrderBy(c => c.ChunkOrder)
             );
@@ -746,10 +937,29 @@ namespace BusinessLayer.Services
                 _ => new RecursiveChunker(chunkSize) // Strategy 4 hoặc mặc định
             };
 
-            return chunker.Chunk(text)
-                          .Select(c => c.Trim())
-                          .Where(c => c.Length > 0)
-                          .ToList();
+            var result = chunker.Chunk(text)
+                                .Select(c => c.Trim())
+                                .Where(c => c.Length > 0)
+                                .ToList();
+
+            // Fallback thông minh: nếu strategy không phải FixedSize mà chỉ ra được 1 chunk
+            // nhưng text lại rất dài (> 2x chunkSize) → tự động dùng FixedSizeChunker
+            // Thường gặp với PDF toán học, scan, text không có xuống dòng kép (\n\n)
+            if (result.Count <= 1 && text.Length > chunkSize * 2 && strategyId != 1)
+            {
+                _logger.LogWarning(
+                    "Strategy {StrategyId} produced only {Count} chunk(s) for text length {Length}. " +
+                    "Falling back to FixedSizeChunker (size={ChunkSize}, overlap={Overlap}).",
+                    strategyId, result.Count, text.Length, chunkSize, chunkOverlap);
+
+                result = new FixedSizeChunker(chunkSize, chunkOverlap)
+                    .Chunk(text)
+                    .Select(c => c.Trim())
+                    .Where(c => c.Length > 0)
+                    .ToList();
+            }
+
+            return result;
         }
 
         private async Task<float[]> GenerateEmbeddingWithFallbackAsync(

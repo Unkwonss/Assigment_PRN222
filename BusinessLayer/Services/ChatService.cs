@@ -23,6 +23,7 @@ namespace BusinessLayer.Services
         private readonly IGenericRepository<DocumentChunk> _chunkRepo;
         private readonly IGenericRepository<Subject> _subjectRepo;
         private readonly IGenericRepository<EmbeddingModel> _modelRepo;
+        private readonly IGenericRepository<User> _userRepo;
         private readonly SimulatedAIEngine _aiEngine;
         private readonly IGeminiService _geminiService;
         private readonly IGeminiEmbeddingService _embeddingService;
@@ -38,6 +39,7 @@ namespace BusinessLayer.Services
             IGenericRepository<DocumentChunk> chunkRepo,
             IGenericRepository<Subject> subjectRepo,
             IGenericRepository<EmbeddingModel> modelRepo,
+            IGenericRepository<User> userRepo,
             SimulatedAIEngine aiEngine,
             IGeminiService geminiService,
             IGeminiEmbeddingService embeddingService,
@@ -52,6 +54,7 @@ namespace BusinessLayer.Services
             _chunkRepo        = chunkRepo;
             _subjectRepo      = subjectRepo;
             _modelRepo        = modelRepo;
+            _userRepo         = userRepo;
             _aiEngine         = aiEngine;
             _geminiService    = geminiService;
             _embeddingService = embeddingService;
@@ -247,9 +250,53 @@ namespace BusinessLayer.Services
             var session = await _sessionRepo.GetFirstOrDefaultAsync(s => s.SessionId == sessionId, "Subject");
             if (session == null) throw new ArgumentException("Phiên trò chuyện không tồn tại.");
 
+            // Check Weekly Token Limit
+            var user = await _userRepo.GetByIdAsync(session.UserId);
+            if (user != null && (user.Role == "Student" || user.Role == "Teacher")) // Restrict both student and teacher limits
+            {
+                DateTime now = DateTime.UtcNow;
+                int diff = (7 + (now.DayOfWeek - DayOfWeek.Monday)) % 7;
+                DateTime startOfWeek = now.AddDays(-1 * diff).Date;
+
+                var weeklyUsedTokens = await _historyRepo.GetAllAsync(
+                    filter: h => h.Session.UserId == session.UserId && h.Timestamp >= startOfWeek,
+                    includeProperties: "Session"
+                );
+                int totalWeeklyUsed = weeklyUsedTokens.Sum(h => (h.TokensIn ?? 0) + (h.TokensOut ?? 0));
+
+                // Tính toán hạn mức khả dụng (bao gồm token mua thêm trả phí còn hạn sử dụng)
+                bool hasActivePaidTokens = user.PurchasedTokenBalance > 0 && (user.PurchasedTokenExpiry == null || user.PurchasedTokenExpiry > DateTime.UtcNow);
+                int activeLimit = user.WeeklyTokenLimit;
+                if (hasActivePaidTokens)
+                {
+                    activeLimit += user.PurchasedTokenBalance;
+                }
+
+                if (totalWeeklyUsed >= activeLimit)
+                {
+                    string limitMessage = $"⚠️ **Hạn mức sử dụng của bạn đã hết!**\n\n- Đã dùng trong tuần: **{totalWeeklyUsed:N0}** / Hạn mức khả dụng: **{activeLimit:N0}** tokens.\n- Vui lòng mua thêm gói Token hoặc liên hệ Quản trị viên để được tăng thêm hạn mức.";
+                    var limitHistory = new ChatHistory
+                    {
+                        SessionId = sessionId,
+                        UserMessage = userMessage,
+                        StandaloneQuery = userMessage,
+                        BotResponse = limitMessage,
+                        Timestamp = DateTime.UtcNow,
+                        TokensIn = 0,
+                        TokensOut = 0,
+                        LatencyMs = 0
+                    };
+                    await _historyRepo.AddAsync(limitHistory);
+                    await _historyRepo.SaveAsync();
+                    return (MapHistoryToDto(limitHistory)!, new List<(ChatCitationDto, float)>());
+                }
+            }
+
             string subjectCode = session.Subject?.SubjectCode ?? "PRN222";
             int subjectId = session.SubjectId;
             string botResponse = "";
+            int promptTokens = 0;
+            int completionTokens = 0;
             var relevantChunks = await GetRelevantChunksAsync(
                 userMessage, subjectId, embeddingModelId, strategyId, chunkSize, chunkOverlap, topK: 3);
 
@@ -268,16 +315,48 @@ namespace BusinessLayer.Services
                         : relevantChunks[0].Chunk.Content);
             }
 
+            int? latencyMs = null;
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
             if (relevantChunks == null)
             {
+                sw.Stop();
+                latencyMs = 0;
+                promptTokens = 0;
+                completionTokens = 0;
                 // Dimension mismatch: tất cả chunk bị loại vì index bằng model khác
                 botResponse = "⚠️ Tài liệu chưa được index với model này. " +
                               "Vui lòng chọn lại tài liệu và nhấn \"Re-Index\" với model đang chọn.";
             }
             else if (!relevantChunks.Any())
             {
-                botResponse = "Không tìm thấy nội dung liên quan trong tài liệu đã index. " +
-                              "Vui lòng đặt câu hỏi cụ thể hơn hoặc kiểm tra lại tài liệu nguồn.";
+                var recentHistory = await _historyRepo.GetAllAsync(
+                    h => h.SessionId == sessionId,
+                    orderBy: q => q.OrderBy(h => h.Timestamp)
+                );
+                var historyTuples = new List<(string role, string content)>();
+                foreach (var h in recentHistory.TakeLast(5))
+                {
+                    historyTuples.Add(("user", h.UserMessage));
+                    if (!string.IsNullOrWhiteSpace(h.BotResponse))
+                    {
+                        historyTuples.Add(("assistant", h.BotResponse));
+                    }
+                }
+
+                _logger.LogInformation("[RAG-PIPELINE] No relevant chunks found above similarity threshold. Calling Gemini with empty context.");
+
+                var geminiResult = await _geminiService.GenerateResponseAsync(
+                    userMessage,
+                    new List<string>(),
+                    historyTuples,
+                    subjectCode
+                );
+                sw.Stop();
+                latencyMs = (int)sw.ElapsedMilliseconds;
+                botResponse = "*(Lưu ý: Không tìm thấy tài liệu liên quan trong giáo trình. Dưới đây là câu trả lời tham khảo)*\n\n" + geminiResult.Response;
+                promptTokens = geminiResult.PromptTokens;
+                completionTokens = geminiResult.CompletionTokens;
             }
             else if (relevantChunks != null)
             {
@@ -311,12 +390,17 @@ namespace BusinessLayer.Services
                     "[RAG-PIPELINE] Calling GeminiService with {ChunkCount} chunks, {HistoryCount} history items, subject={Subject}",
                     contextTexts.Count, historyTuples.Count, subjectCode);
 
-                botResponse = await _geminiService.GenerateResponseAsync(
+                var geminiResult = await _geminiService.GenerateResponseAsync(
                     userMessage,
                     contextTexts,
                     historyTuples,
                     subjectCode
                 );
+                sw.Stop();
+                latencyMs = (int)sw.ElapsedMilliseconds;
+                botResponse = geminiResult.Response;
+                promptTokens = geminiResult.PromptTokens;
+                completionTokens = geminiResult.CompletionTokens;
             }
 
             // Save Chat History
@@ -326,7 +410,10 @@ namespace BusinessLayer.Services
                 UserMessage = userMessage,
                 StandaloneQuery = userMessage,
                 BotResponse = botResponse,
-                Timestamp = DateTime.UtcNow
+                Timestamp = DateTime.UtcNow,
+                TokensIn = promptTokens,
+                TokensOut = completionTokens,
+                LatencyMs = latencyMs
             };
 
             await _historyRepo.AddAsync(history);
@@ -334,7 +421,17 @@ namespace BusinessLayer.Services
 
             // Save Citations if any match
             var citationsWithScore = new List<(ChatCitationDto Citation, float Score)>();
-            if (relevantChunks != null && relevantChunks.Any())
+            
+            bool responseIndicatesNoDocumentMention = 
+                botResponse.Contains("Tài liệu chưa đề cập", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("Tài liệu không đề cập", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("Tài liệu không nhắc đến", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("không tìm thấy trong tài liệu", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("không có thông tin trong tài liệu", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("không tìm thấy thông tin này", StringComparison.OrdinalIgnoreCase) ||
+                botResponse.Contains("chưa đề cập nội dung này", StringComparison.OrdinalIgnoreCase);
+
+            if (relevantChunks != null && relevantChunks.Any() && !responseIndicatesNoDocumentMention)
             {
                 foreach (var tc in relevantChunks)
                 {
@@ -403,7 +500,7 @@ namespace BusinessLayer.Services
             var questionVector = await embeddingProvider.GetEmbeddingAsync(question);
             bool useVectorSearch = questionVector.Length > 0;
 
-            var matchingChunks = (await _chunkRepo.GetAllAsync(
+            var matchingChunks = (await _chunkRepo.GetAllNoTrackingAsync(
                 filter: c => c.Index.Document.Chapter.SubjectId == subjectId &&
                              c.Index.Document.Status == "Indexed" &&
                              c.Index.ModelId == embeddingModelId &&
@@ -421,7 +518,7 @@ namespace BusinessLayer.Services
 
             if (!matchingChunks.Any())
             {
-                matchingChunks = (await _chunkRepo.GetAllAsync(
+                matchingChunks = (await _chunkRepo.GetAllNoTrackingAsync(
                     filter: c => c.Index.Document.Chapter.SubjectId == subjectId &&
                                  c.Index.Document.Status == "Indexed" &&
                                  c.Index.ModelId == embeddingModelId &&
@@ -437,7 +534,7 @@ namespace BusinessLayer.Services
 
             if (!matchingChunks.Any())
             {
-                matchingChunks = (await _chunkRepo.GetAllAsync(
+                matchingChunks = (await _chunkRepo.GetAllNoTrackingAsync(
                     filter: c => c.Index.Document.Chapter.SubjectId == subjectId &&
                                  c.Index.Document.Status == "Indexed" &&
                                  c.Content != null &&
@@ -491,7 +588,7 @@ namespace BusinessLayer.Services
                 result = scored
                     .OrderByDescending(x => x.Score)
                     .Take(topK)
-                    .Where(x => x.Score > 0.4f)
+                    .Where(x => x.Score > 0.55f)
                     .ToList();
 
                 if (!result.Any())
@@ -518,7 +615,11 @@ namespace BusinessLayer.Services
                 .ToList();
 
             return chunks
-                .Select(c => (Chunk: c, Score: (float)keywords.Count(k => c.Content.ToLower().Contains(k))))
+                .Select(c =>
+                {
+                    var lowerContent = c.Content.ToLower();
+                    return (Chunk: c, Score: (float)keywords.Count(k => lowerContent.Contains(k)));
+                })
                 .Where(x => x.Score > 0f)
                 .OrderByDescending(x => x.Score)
                 .Take(topK)
@@ -529,6 +630,24 @@ namespace BusinessLayer.Services
         {
             if (string.IsNullOrEmpty(json)) return Array.Empty<float>();
             return JsonSerializer.Deserialize<float[]>(json) ?? Array.Empty<float>();
+        }
+
+        public async Task<int> GetWeeklyTokenUsageBySessionAsync(Guid sessionId)
+        {
+            var session = await _sessionRepo.GetByIdAsync(sessionId);
+            if (session == null) return 0;
+
+            int userId = session.UserId;
+            DateTime now = DateTime.UtcNow;
+            int diff = (7 + (now.DayOfWeek - DayOfWeek.Monday)) % 7;
+            DateTime startOfWeek = now.AddDays(-1 * diff).Date;
+
+            var weeklyHistory = await _historyRepo.GetAllAsync(
+                filter: h => h.Session != null && h.Session.UserId == userId && h.Timestamp >= startOfWeek,
+                includeProperties: "Session"
+            );
+
+            return weeklyHistory.Sum(h => (h.TokensIn ?? 0) + (h.TokensOut ?? 0));
         }
     }
 }

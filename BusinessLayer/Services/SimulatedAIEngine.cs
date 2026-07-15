@@ -71,7 +71,7 @@ namespace BusinessLayer.Services
         {
             // Try to call real APIs if configured (Gemini/Ollama)
             string? realResponse = CallRealAIIfNeededAsync(userQuery, contexts, subjectCode).GetAwaiter().GetResult();
-            if (!string.IsNullOrEmpty(realResponse))
+            if (!string.IsNullOrEmpty(realResponse) && !realResponse.StartsWith("[Lỗi"))
             {
                 return realResponse;
             }
@@ -126,7 +126,7 @@ namespace BusinessLayer.Services
         {
             if (_configuration == null) return null;
 
-            string? geminiApiKey = _configuration["Gemini:ApiKey"];
+            string? geminiApiKey = _configuration["GeminiSettings:ApiKey"] ?? _configuration["Gemini:ApiKey"];
             if (!string.IsNullOrEmpty(geminiApiKey) && geminiApiKey != "YOUR_GEMINI_API_KEY")
             {
                 return await CallGeminiApiAsync(userQuery, contexts, subjectCode, geminiApiKey);
@@ -185,6 +185,11 @@ namespace BusinessLayer.Services
                                 new { text = sbPrompt.ToString() }
                             }
                         }
+                    },
+                    generationConfig = new
+                    {
+                        maxOutputTokens = 2048,
+                        temperature = 0.7
                     }
                 };
 

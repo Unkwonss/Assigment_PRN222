@@ -28,7 +28,7 @@ namespace BusinessLayer.Services
             _logger = logger;
         }
 
-        public async Task<string> GenerateResponseAsync(
+        public async Task<(string Response, int PromptTokens, int CompletionTokens)> GenerateResponseAsync(
             string userQuestion,
             List<string> contextChunks,
             List<(string role, string content)> conversationHistory,
@@ -67,14 +67,14 @@ namespace BusinessLayer.Services
 
                 _logger.LogInformation(
                     "[RAG] Gemini response (first 300 chars): {Response}",
-                    response.Length > 300 ? response[..300] : response);
+                    response.Response.Length > 300 ? response.Response[..300] : response.Response);
 
                 return response;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Lỗi khi gọi Gemini API: {Message}", ex.Message);
-                return "Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn.";
+                return ("Xin lỗi, đã có lỗi xảy ra khi xử lý câu hỏi của bạn.", 0, 0);
             }
         }
 
@@ -87,14 +87,20 @@ namespace BusinessLayer.Services
             var sb = new StringBuilder();
 
             sb.AppendLine("Bạn là trợ lý học tập cho môn " + (string.IsNullOrEmpty(subject) ? "học" : subject) + ".");
-            sb.AppendLine("Nhiệm vụ: Đọc kỹ TÀI LIỆU THAM KHẢO bên dưới, sau đó trả lời câu hỏi của sinh viên dựa trên nội dung tài liệu đó.");
-            sb.AppendLine("Hãy trích dẫn và giải thích nội dung từ tài liệu một cách chi tiết.");
-            sb.AppendLine("CHỈ khi tài liệu hoàn toàn KHÔNG chứa bất kỳ thông tin nào liên quan đến câu hỏi, hãy trả lời: 'Tài liệu chưa đề cập nội dung này.'");
-            sb.AppendLine("Trả lời bằng tiếng Việt, rõ ràng, có cấu trúc.");
-            sb.AppendLine();
 
             if (chunks != null && chunks.Count > 0)
             {
+                sb.AppendLine("Nhiệm vụ: Đọc kỹ TÀI LIỆU THAM KHẢO bên dưới (được đánh dấu là --- Đoạn 1 ---, --- Đoạn 2 ---,...), sau đó trả lời câu hỏi của sinh viên dựa trên nội dung tài liệu đó.");
+                sb.AppendLine("HƯỚNG DẪN TRÍCH DẪN NGUỒN:");
+                sb.AppendLine("1. Bạn PHẢI trích dẫn nguồn ngay giữa câu trả lời (inline citation) tại những câu cụ thể mà bạn lấy thông tin từ tài liệu.");
+                sb.AppendLine("2. Hãy sử dụng đúng ký hiệu [Nguồn X] trong đó X là số thứ tự của Đoạn văn bản chứa thông tin đó. Ví dụ: '[Nguồn 1]', '[Nguồn 2]'. Nếu thông tin từ nhiều đoạn, hãy ghi: '[Nguồn 1, Nguồn 2]'.");
+                sb.AppendLine("3. Ví dụ cách trả lời: 'Theo tài liệu [Nguồn 1], từ vựng bài 1 gồm... nhưng ngữ pháp lại ở bài 2 [Nguồn 2].'");
+                sb.AppendLine("4. CHỈ khi tài liệu hoàn toàn KHÔNG chứa bất kỳ thông tin nào liên quan đến câu hỏi, hãy trả lời: 'Tài liệu chưa đề cập nội dung này.'");
+                sb.AppendLine("5. QUAN TRỌNG: Hãy diễn đạt lại (paraphrase) bằng ngôn từ tự nhiên của bạn, KHÔNG SAO CHÉP NGUYÊN VĂN các câu dài từ tài liệu tham khảo để tránh kích hoạt bộ lọc bản quyền (recitation filter) của hệ thống gây ngắt quãng câu trả lời.");
+                sb.AppendLine("6. Hãy trả lời thật đầy đủ, chi tiết, phân tích rõ ràng và viết trọn vẹn câu trả lời. Không dừng câu dở dang.");
+                sb.AppendLine("Trả lời bằng tiếng Việt, rõ ràng, có cấu trúc.");
+                sb.AppendLine();
+
                 sb.AppendLine("=== TÀI LIỆU THAM KHẢO ===");
                 for (int i = 0; i < chunks.Count; i++)
                 {
@@ -107,8 +113,9 @@ namespace BusinessLayer.Services
             }
             else
             {
-                _logger.LogWarning("[RAG] BuildRAGPrompt: chunkContents RỖNG! Đây là nguyên nhân AI từ chối.");
-                sb.AppendLine("Chưa có tài liệu được cung cấp.");
+                _logger.LogWarning("[RAG] BuildRAGPrompt: chunkContents RỖNG! Đây là chế độ trả lời tham khảo.");
+                sb.AppendLine("Nhiệm vụ: Không tìm thấy tài liệu tham khảo nào liên quan trực tiếp trong giáo trình môn học này. Hãy sử dụng kiến thức chuyên môn rộng rãi của bạn về môn " + (string.IsNullOrEmpty(subject) ? "học" : subject) + " để trả lời chi tiết, chính xác và đầy đủ nhất có thể câu hỏi của sinh viên.");
+                sb.AppendLine("Trả lời bằng tiếng Việt, rõ ràng, phân tích sâu sắc.");
                 sb.AppendLine();
             }
 
@@ -124,17 +131,17 @@ namespace BusinessLayer.Services
             }
 
             sb.AppendLine($"Sinh viên hỏi: {question}");
-            sb.AppendLine("Hãy trả lời dựa trên tài liệu ở trên:");
+            sb.AppendLine("Hãy trả lời:");
 
             return sb.ToString();
         }
 
-        private async Task<string> CallGeminiAPIAsync(string prompt)
+        private async Task<(string Response, int PromptTokens, int CompletionTokens)> CallGeminiAPIAsync(string prompt)
         {
             if (string.IsNullOrWhiteSpace(_settings.ApiKey))
             {
                 _logger.LogWarning("GeminiSettings.ApiKey is empty. Falling back to local response.");
-                return "Hệ thống chưa được cấu hình khóa API Gemini. Vui lòng liên hệ quản trị viên.";
+                return ("Hệ thống chưa được cấu hình khóa API Gemini. Vui lòng liên hệ quản trị viên.", 0, 0);
             }
 
             var client = _httpClientFactory.CreateClient("GeminiClient");
@@ -160,6 +167,13 @@ namespace BusinessLayer.Services
                     maxOutputTokens = _settings.MaxOutputTokens,
                     topP = 0.8,
                     topK = 40
+                },
+                safetySettings = new[]
+                {
+                    new { category = "HARM_CATEGORY_HARASSMENT", threshold = "BLOCK_NONE" },
+                    new { category = "HARM_CATEGORY_HATE_SPEECH", threshold = "BLOCK_NONE" },
+                    new { category = "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold = "BLOCK_NONE" },
+                    new { category = "HARM_CATEGORY_DANGEROUS_CONTENT", threshold = "BLOCK_NONE" }
                 }
             };
 
@@ -199,7 +213,7 @@ namespace BusinessLayer.Services
 
                         // Non-retryable error
                         if (statusCode == 429)
-                            return "Hệ thống đang bận (API rate limit). Vui lòng đợi 30 giây rồi thử lại.";
+                            return ("Hệ thống đang bận (API rate limit). Vui lòng đợi 30 giây rồi thử lại.", 0, 0);
 
                         response.EnsureSuccessStatusCode();
                     }
@@ -215,7 +229,7 @@ namespace BusinessLayer.Services
                         candidates.GetArrayLength() == 0)
                     {
                         _logger.LogWarning("Gemini response không có candidates hợp lệ.");
-                        return "Không nhận được phản hồi từ AI.";
+                        return ("Không nhận được phản hồi từ AI.", 0, 0);
                     }
 
                     var firstCandidate = candidates[0];
@@ -225,7 +239,7 @@ namespace BusinessLayer.Services
                         parts.GetArrayLength() == 0)
                     {
                         _logger.LogWarning("Gemini response không có content/parts hợp lệ.");
-                        return "Không nhận được phản hồi từ AI.";
+                        return ("Không nhận được phản hồi từ AI.", 0, 0);
                     }
 
                     // Loop through all parts in the candidate's content to support multi-part text generation (prevent cut-off)
@@ -238,8 +252,16 @@ namespace BusinessLayer.Services
                         }
                     }
 
+                    int promptTokens = 0;
+                    int completionTokens = 0;
+                    if (root.TryGetProperty("usageMetadata", out var usageMetadata))
+                    {
+                        if (usageMetadata.TryGetProperty("promptTokenCount", out var ptc)) promptTokens = ptc.GetInt32();
+                        if (usageMetadata.TryGetProperty("candidatesTokenCount", out var ctc)) completionTokens = ctc.GetInt32();
+                    }
+
                     var text = sbText.ToString();
-                    return string.IsNullOrWhiteSpace(text) ? "Không nhận được phản hồi từ AI." : text;
+                    return (string.IsNullOrWhiteSpace(text) ? "Không nhận được phản hồi từ AI." : text, promptTokens, completionTokens);
                 }
                 catch (TaskCanceledException) when (attempt < maxRetries)
                 {
@@ -253,7 +275,7 @@ namespace BusinessLayer.Services
                 }
             }
 
-            return "Không thể kết nối đến Gemini API sau nhiều lần thử. Vui lòng thử lại.";
+            return ("Không thể kết nối đến Gemini API sau nhiều lần thử. Vui lòng thử lại.", 0, 0);
         }
     }
 }
