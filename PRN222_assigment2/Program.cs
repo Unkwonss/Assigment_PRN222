@@ -26,6 +26,10 @@ namespace PRN222_assigment2
             builder.Services.Configure<GeminiSettings>(
                 builder.Configuration.GetSection("GeminiSettings"));
 
+            // Bind MomoSettings từ config
+            builder.Services.Configure<MomoSettings>(
+                builder.Configuration.GetSection("MomoSettings"));
+
             // Đăng ký HttpClient cho Gemini
             builder.Services.AddHttpClient("GeminiClient", client =>
             {
@@ -58,6 +62,8 @@ namespace PRN222_assigment2
             builder.Services.AddScoped<IGeminiService, GeminiService>();
             builder.Services.AddScoped<IGeminiEmbeddingService, GeminiEmbeddingService>();
             builder.Services.AddScoped<IBenchmarkService, BenchmarkService>();
+            builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
+            builder.Services.AddScoped<IMomoService, MomoService>();
             builder.Services.AddScoped<EmbeddingProviderFactory>();
 
             // Configure Authentication với Cookie
@@ -176,6 +182,12 @@ namespace PRN222_assigment2
                             }
                         }
                     }
+
+
+                    // Seed default subscription packages
+                    var subscriptionService = scope.ServiceProvider.GetRequiredService<ISubscriptionService>();
+                    await subscriptionService.SeedDefaultPackagesAsync();
+                    Console.WriteLine("[SEED] Subscription packages seeding checked/completed.");
                 }
             }
 
